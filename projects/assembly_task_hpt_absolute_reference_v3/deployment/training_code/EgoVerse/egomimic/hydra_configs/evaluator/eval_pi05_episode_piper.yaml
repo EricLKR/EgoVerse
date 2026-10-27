@@ -1,0 +1,6 @@
+_target_: egomimic.eval.eval_pi05_episode.PI05EpisodeEval
+output_dir: ${hydra:runtime.output_dir}/episode_eval
+query_frequency: 10
+action_horizon_frames: 30
+dpi: 160
+limit_val_batches: 1.0

@@ -1,0 +1,13 @@
+{
+  "joint_positions_deg": [
+    6.46,
+    42.912,
+    -27.554,
+    -11.212,
+    39.809,
+    7.905
+  ],
+  "gripper_opening_mm": 99.7,
+  "source": "Assembly New1 Home with J5 decreased by 2 degrees for direction-only demonstration",
+  "task": "Assembly New1 J5 sign demo"
+}

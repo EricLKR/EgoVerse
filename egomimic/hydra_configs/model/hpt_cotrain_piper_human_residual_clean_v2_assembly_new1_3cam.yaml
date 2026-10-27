@@ -1,0 +1,67 @@
+defaults:
+  - hpt_cotrain_piper_human_residual_clean_v2
+  - _self_
+
+# Train-only statistics after deterministic tail trimming (167,574 frames).
+robomimic_model:
+  # New Gen2 demonstrations contain only the right hand.  The legacy base
+  # config remains untouched; these keys switch the active mixed domain.
+  domains: [piper_left_arm, human_right_arm]
+  ac_keys:
+    piper_left_arm: actions_cartesian_pose
+    human_right_arm: actions_cartesian_pose
+  loss_weights:
+    piper_left_arm:
+      shared: 1.0
+      actions_joints: 2.0
+    human_right_arm:
+      shared: 1.0
+  stem_specs:
+    piper_left_arm:
+      side_img:
+        _target_: egomimic.models.hpt_nets.MLPPolicyStem
+        input_dim: 256
+        output_dim: 256
+        widths: [256]
+        specs:
+          random_horizon_masking: false
+          cross_attn:
+            crossattn_latent: 16
+            crossattn_heads: 8
+            crossattn_dim_head: 64
+            crossattn_modality_dropout: 0.1
+            modality_embed_dim: 256
+    human_right_arm:
+      state_ee_pose:
+        _target_: egomimic.models.hpt_nets.MLPPolicyStem
+        input_dim: 9
+        output_dim: 256
+        widths: [256]
+        specs:
+          random_horizon_masking: false
+          cross_attn:
+            crossattn_latent: 16
+            crossattn_heads: 8
+            crossattn_dim_head: 64
+            crossattn_modality_dropout: 0.1
+            modality_embed_dim: 256
+  encoder_specs:
+    side_img:
+      _target_: egomimic.models.hpt_nets.ResNet
+      output_dim: 256
+      weights: DEFAULT
+      freeze_backbone: true
+  head_specs:
+    human_right_arm: null
+    shared:
+      infer_ac_dims:
+        piper_left_arm: 9
+        human_right_arm: 9
+    piper_left_arm_actions_joints:
+      # New Assembly trajectories reach 101.77 deg on J5 within the native
+      # 30-step target horizon.  The old 90 deg scalar bound cannot represent
+      # 1,196 labels, so use the smallest practical scalar bound with margin.
+      max_residual_deg: 110.0
+      gripper_closed_weight: 0.9283363802559415
+      gripper_open_weight: 1.0836534357661118
+      gripper_open_prior: 0.4614021268215833

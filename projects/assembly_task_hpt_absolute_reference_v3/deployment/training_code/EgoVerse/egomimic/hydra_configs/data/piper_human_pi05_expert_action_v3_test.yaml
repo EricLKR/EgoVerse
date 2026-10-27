@@ -1,0 +1,23 @@
+defaults:
+  - piper_human_pi05_expert_action_v3
+  - _self_
+
+# Independent held-out test split.  The training datasets remain in the config
+# only so trainHydra can rebuild the normalization schema before loading the
+# checkpoint's precomputed statistics.  Evaluation consumes only valid_datasets.
+valid_datasets:
+  piper_left_arm:
+    filters:
+      filter_lambdas:
+        - "lambda row: row['task_name'] == 'teddy_0912_7'"
+  human_left_arm:
+    filters:
+      filter_lambdas:
+        - "lambda row: row['task_name'] == 'put_bear_0919_test'"
+
+train_dataloader_params:
+  piper_left_arm: {batch_size: 1, num_workers: 4}
+  human_left_arm: {batch_size: 1, num_workers: 4}
+valid_dataloader_params:
+  piper_left_arm: {batch_size: 1, num_workers: 4}
+  human_left_arm: {batch_size: 1, num_workers: 4}

@@ -1,0 +1,7 @@
+_target_: egomimic.eval.eval_pi05_mixed_camframe_v5_episode.PI05MixedCamFrameV5EpisodeEval
+output_dir: ${hydra:runtime.output_dir}/episode_eval
+query_frequency: 10
+action_horizon_frames: 30
+human_batch_size: 1
+dpi: 180
+seed: 42

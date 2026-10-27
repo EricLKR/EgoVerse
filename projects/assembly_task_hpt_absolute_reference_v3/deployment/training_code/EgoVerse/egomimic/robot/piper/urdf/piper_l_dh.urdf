@@ -1,0 +1,105 @@
+<?xml version="1.0"?>
+<!-- DH derived Piper-L arm chain; see build_piper_l_dh_urdf.py (this file's generator) and piper_kinematics.py's module docstring for full provenance and the bug this replaced. link6_dh is the same physical frame piper_fk.py calls joint6/R06. The flange_link/gripper_base tail is copied unchanged from piper_l_ee.urdf (a small, about 4.5mm fixed offset never implicated in the discrepancy). -->
+<robot name="piper_l_dh">
+  <link name="world" />
+  <joint name="world_to_base_link" type="fixed">
+    <parent link="world" />
+    <child link="base_link" />
+  </joint>
+  <link name="base_link"/>
+
+  <link name="link1_pre"/>
+  <joint name="joint1" type="revolute">
+    <parent link="base_link"/>
+    <child link="link1_pre"/>
+    <origin xyz="0.000000000 0.000000000 0.000000000" rpy="0.000000000 0.000000000 0.000000000"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-3.14159" upper="3.14159" effort="100" velocity="5"/>
+  </joint>
+  <link name="link1_dh"/>
+  <joint name="joint1_post" type="fixed">
+    <parent link="link1_pre"/>
+    <child link="link1_dh"/>
+    <origin xyz="0 0 0.123000000" rpy="0 0 0"/>
+  </joint>
+  <link name="link2_pre"/>
+  <joint name="joint2" type="revolute">
+    <parent link="link1_dh"/>
+    <child link="link2_pre"/>
+    <origin xyz="0.000000000 0.000000000 0.000000000" rpy="1.570796327 -0.135786616 3.141592654"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-3.14159" upper="3.14159" effort="100" velocity="5"/>
+  </joint>
+  <link name="link2_dh"/>
+  <joint name="joint2_post" type="fixed">
+    <parent link="link2_pre"/>
+    <child link="link2_dh"/>
+    <origin xyz="0 0 0.000000000" rpy="0 0 0"/>
+  </joint>
+  <link name="link3_pre"/>
+  <joint name="joint3" type="revolute">
+    <parent link="link2_dh"/>
+    <child link="link3_pre"/>
+    <origin xyz="0.285030000 0.000000000 0.000000000" rpy="0.000000000 0.000000000 -1.793849405"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-3.14159" upper="3.14159" effort="100" velocity="5"/>
+  </joint>
+  <link name="link3_dh"/>
+  <joint name="joint3_post" type="fixed">
+    <parent link="link3_pre"/>
+    <child link="link3_dh"/>
+    <origin xyz="0 0 0.000000000" rpy="0 0 0"/>
+  </joint>
+  <link name="link4_pre"/>
+  <joint name="joint4" type="revolute">
+    <parent link="link3_dh"/>
+    <child link="link4_pre"/>
+    <origin xyz="-0.021980000 0.000000000 0.000000000" rpy="1.570796327 0.000000000 0.000000000"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-3.14159" upper="3.14159" effort="100" velocity="5"/>
+  </joint>
+  <link name="link4_dh"/>
+  <joint name="joint4_post" type="fixed">
+    <parent link="link4_pre"/>
+    <child link="link4_dh"/>
+    <origin xyz="0 0 0.250750000" rpy="0 0 0"/>
+  </joint>
+  <link name="link5_pre"/>
+  <joint name="joint5" type="revolute">
+    <parent link="link4_dh"/>
+    <child link="link5_pre"/>
+    <origin xyz="0.000000000 0.000000000 0.000000000" rpy="-1.570796327 0.000000000 0.000000000"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-3.14159" upper="3.14159" effort="100" velocity="5"/>
+  </joint>
+  <link name="link5_dh"/>
+  <joint name="joint5_post" type="fixed">
+    <parent link="link5_pre"/>
+    <child link="link5_dh"/>
+    <origin xyz="0 0 0.000000000" rpy="0 0 0"/>
+  </joint>
+  <link name="link6_pre"/>
+  <joint name="joint6" type="revolute">
+    <parent link="link5_dh"/>
+    <child link="link6_pre"/>
+    <origin xyz="0.000000000 0.000000000 0.000000000" rpy="1.570796327 0.000000000 0.000000000"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-3.14159" upper="3.14159" effort="100" velocity="5"/>
+  </joint>
+  <link name="link6_dh"/>
+  <joint name="joint6_post" type="fixed">
+    <parent link="link6_pre"/>
+    <child link="link6_dh"/>
+    <origin xyz="0 0 0.091000000" rpy="0 0 0"/>
+  </joint>
+<link name="flange_link">
+</link><joint name="flange_joint" type="fixed">
+  <origin xyz="0 0 0" rpy="0 0 0" />
+  <parent link="link6_dh" />
+  <child link="flange_link" />
+</joint><link name="gripper_base">
+</link><joint name="gripper_base_joint" type="fixed">
+  <origin xyz="0 0 0.0045" rpy="0 0 0" />
+  <parent link="flange_link" />
+  <child link="gripper_base" />
+</joint></robot>

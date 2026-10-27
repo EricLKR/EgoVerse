@@ -1,0 +1,43 @@
+defaults:
+  - pi0.5_base
+  - _self_
+
+robomimic_model:
+  camera_transforms: {}
+  domains: [piper_left_arm, human_left_arm]
+  ac_keys:
+    piper_left_arm: actions_joints
+    human_left_arm: actions_cartesian_pose
+
+  # Both embodiments share the PI 32-D head, but supervise disjoint semantic
+  # layouts through masks: PIPER 0:7, human xyz+rotation6D 0:9.
+  action_converters:
+    rules:
+      PIPER_LEFT_ARM:
+        _target_: egomimic.utils.action_utils.PiperJointActionConverter
+        gripper_weight: 3.0
+      HUMAN_LEFT_ARM:
+        _target_: egomimic.utils.action_utils.HumanLeftXYZ6DActionConverter
+    fallback:
+      _target_: egomimic.utils.action_utils.BaseActionConverter
+
+  camera_slot_maps:
+    piper_left_arm:
+      base_0_rgb: front_img_1
+      left_wrist_0_rgb: wrist_img
+      right_wrist_0_rgb: null
+    human_left_arm:
+      base_0_rgb: front_img_1
+      left_wrist_0_rgb: null
+      right_wrist_0_rgb: null
+
+  default_prompt: "Pick up the teddy bear and place it in the basket."
+  control_mode:
+    piper: "six absolute PIPER joint angles in radians and one binary gripper command"
+    human: "left hand camera-frame xyz and continuous 6D rotation"
+  proprio_keys_for_prompt:
+    piper_left_arm: [observations.state.joints]
+    human_left_arm: [observations.state.ee_pose]
+  gradient_checkpointing: true
+  finetune_mode: action_expert
+  train_multimodal_projector: true

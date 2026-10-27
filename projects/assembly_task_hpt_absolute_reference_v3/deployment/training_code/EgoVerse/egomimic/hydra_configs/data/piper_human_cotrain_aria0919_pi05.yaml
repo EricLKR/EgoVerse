@@ -1,0 +1,10 @@
+defaults:
+  - piper_human_cotrain_aria0919_joint
+  - _self_
+
+train_dataloader_params:
+  piper_left_arm: {batch_size: 2, num_workers: 4}
+  human_left_arm: {batch_size: 2, num_workers: 4}
+valid_dataloader_params:
+  piper_left_arm: {batch_size: 2, num_workers: 4}
+  human_left_arm: {batch_size: 2, num_workers: 4}

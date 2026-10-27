@@ -1,0 +1,98 @@
+_target_: egomimic.pl_utils.pl_data_utils.MultiDataModuleWrapper
+
+# Model selection uses the explicit 60/5/5 robot split and the human validation split.
+# The robot test rows and put_bear_0919_test live in the separate test config.
+train_datasets:
+  piper_left_arm:
+    _target_: egomimic.rldb.zarr.zarr_dataset_multi.MultiDataset._from_resolver
+    resolver:
+      _target_: egomimic.rldb.zarr.zarr_dataset_multi.LocalEpisodeResolver
+      folder_path: ${oc.env:PIPER_HPC}/data/piper_zarr_teddy_0912
+      key_map:
+        _target_: egomimic.rldb.embodiment.piper_human_joint.PiperHumanJoint.get_keymap
+        keymap_mode: joint_cartesian_camframe
+      transform_list:
+        _target_: egomimic.rldb.embodiment.piper_human_joint.PiperHumanJoint.get_transform_list
+        mode: joint_cartesian_camframe
+        stride: 1
+    filters:
+      _target_: egomimic.rldb.filters.DatasetFilter
+      filter_lambdas:
+        - "lambda row: row.get('dataset_split') == 'train'"
+    mode: total
+    reject_outliers: true
+    error_on_nan_inf: true
+  human_left_arm:
+    _target_: egomimic.rldb.zarr.zarr_dataset_multi.MultiDataset._from_resolver
+    resolver:
+      _target_: egomimic.rldb.zarr.zarr_dataset_multi.LocalEpisodeResolver
+      folder_path: ${oc.env:PIPER_HPC}/data/aria_put_bear_0919_zarr
+      key_map:
+        _target_: egomimic.rldb.embodiment.human_single_arm.get_keymap
+        keymap_mode: cartesian_camframe
+        has_head_pose: true
+        arm: left
+      transform_list:
+        _target_: egomimic.rldb.embodiment.human_single_arm.get_transform_list
+        mode: cartesian_camframe
+        stride: 1
+        arm: left
+        actions_key: actions_cartesian_pose
+    filters:
+      _target_: egomimic.rldb.filters.DatasetFilter
+      filter_lambdas:
+        - "lambda row: row['task_name'] == 'put_bear_0919_train'"
+    mode: total
+    reject_outliers: false
+    error_on_nan_inf: true
+
+valid_datasets:
+  piper_left_arm:
+    _target_: egomimic.rldb.zarr.zarr_dataset_multi.MultiDataset._from_resolver
+    resolver:
+      _target_: egomimic.rldb.zarr.zarr_dataset_multi.LocalEpisodeResolver
+      folder_path: ${oc.env:PIPER_HPC}/data/piper_zarr_teddy_0912
+      key_map:
+        _target_: egomimic.rldb.embodiment.piper_human_joint.PiperHumanJoint.get_keymap
+        keymap_mode: joint_cartesian_camframe
+      transform_list:
+        _target_: egomimic.rldb.embodiment.piper_human_joint.PiperHumanJoint.get_transform_list
+        mode: joint_cartesian_camframe
+        stride: 1
+    filters:
+      _target_: egomimic.rldb.filters.DatasetFilter
+      filter_lambdas:
+        - "lambda row: row.get('dataset_split') == 'valid'"
+    mode: total
+    reject_outliers: false
+    error_on_nan_inf: true
+  human_left_arm:
+    _target_: egomimic.rldb.zarr.zarr_dataset_multi.MultiDataset._from_resolver
+    resolver:
+      _target_: egomimic.rldb.zarr.zarr_dataset_multi.LocalEpisodeResolver
+      folder_path: ${oc.env:PIPER_HPC}/data/aria_put_bear_0919_zarr
+      key_map:
+        _target_: egomimic.rldb.embodiment.human_single_arm.get_keymap
+        keymap_mode: cartesian_camframe
+        has_head_pose: true
+        arm: left
+      transform_list:
+        _target_: egomimic.rldb.embodiment.human_single_arm.get_transform_list
+        mode: cartesian_camframe
+        stride: 1
+        arm: left
+        actions_key: actions_cartesian_pose
+    filters:
+      _target_: egomimic.rldb.filters.DatasetFilter
+      filter_lambdas:
+        - "lambda row: row['task_name'] == 'put_bear_0919_valid'"
+    mode: total
+    reject_outliers: false
+    error_on_nan_inf: true
+
+train_dataloader_params:
+  piper_left_arm: {batch_size: 8, num_workers: 4}
+  human_left_arm: {batch_size: 8, num_workers: 4}
+valid_dataloader_params:
+  piper_left_arm: {batch_size: 8, num_workers: 4}
+  human_left_arm: {batch_size: 8, num_workers: 4}

@@ -1,0 +1,10 @@
+defaults:
+  - piper_solo_teddy_0912_joint
+  - _self_
+
+# The action-expert partial-finetune smoke must validate this physical batch
+# on one GH200 before a formal run is submitted.
+train_dataloader_params:
+  piper_left_arm: {batch_size: 2, num_workers: 4}
+valid_dataloader_params:
+  piper_left_arm: {batch_size: 2, num_workers: 4}

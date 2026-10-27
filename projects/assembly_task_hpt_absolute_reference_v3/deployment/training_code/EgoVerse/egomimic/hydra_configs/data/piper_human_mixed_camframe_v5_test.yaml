@@ -1,0 +1,19 @@
+defaults:
+  - piper_human_mixed_camframe_v5
+  - _self_
+
+# Independent held-out test sets.  Training datasets remain present only to
+# reconstruct the normalization schema before precomputed statistics are loaded.
+valid_datasets:
+  piper_left_arm:
+    filters:
+      filter_lambdas:
+        - "lambda row: row['task_name'] == 'teddy_0912_7'"
+  human_left_arm:
+    filters:
+      filter_lambdas:
+        - "lambda row: row['task_name'] == 'put_bear_0919_test'"
+
+valid_dataloader_params:
+  piper_left_arm: {batch_size: 1, num_workers: 4}
+  human_left_arm: {batch_size: 1, num_workers: 4}

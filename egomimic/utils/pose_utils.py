@@ -129,6 +129,84 @@ def _xyzypr_to_matrix(xyzypr: np.ndarray) -> np.ndarray:
     return mats
 
 
+def _matrix_to_xyz6d(mats: np.ndarray) -> np.ndarray:
+    """
+    args:
+        mats: (B, 4, 4) array of SE3 transformation matrices
+    returns:
+        (B, 9) np.array of [x, y, z, R[:,0] (3), R[:,1] (3)] -- the continuous
+        6D rotation representation (Zhou et al., "On the Continuity of
+        Rotation Representations in Neural Networks"). Unlike yaw/pitch/roll,
+        this has no wraparound discontinuity at +-pi, so per-key min/max
+        normalization and outlier-bounds checks (see zarr_dataset_multi.py's
+        "Bounds violation" rejection sampling) stay stable near that boundary.
+        Same convention `egomimic/utils/action_utils.py`'s converters already
+        use (there: c1, c2 = R[..., 0], R[..., 1]).
+    """
+    if mats.ndim != 3 or mats.shape[-2:] != (4, 4):
+        raise ValueError(f"Expected (B, 4, 4) array, got shape {mats.shape}")
+
+    mats = np.asarray(mats)
+    dtype = mats.dtype if np.issubdtype(mats.dtype, np.floating) else np.float64
+
+    xyz = mats[:, :3, 3]
+    c1 = mats[:, :3, 0]
+    c2 = mats[:, :3, 1]
+
+    return np.concatenate([xyz, c1, c2], axis=-1).astype(dtype, copy=False)
+
+
+def _xyz6d_to_matrix(xyz6d: np.ndarray) -> np.ndarray:
+    """
+    Inverse of `_matrix_to_xyz6d`.
+
+    args:
+        xyz6d: (B, 9) np.array of [x, y, z, c1 (3), c2 (3)]
+    returns:
+        (B, 4, 4) array of SE3 transformation matrices. `c1`/`c2` are
+        Gram-Schmidt orthonormalized (as in Zhou et al.) before use, so this
+        tolerates the small numeric drift a network's raw output will have.
+    """
+    if xyz6d.ndim != 2 or xyz6d.shape[-1] != 9:
+        raise ValueError(f"Expected (B, 9) array, got shape {xyz6d.shape}")
+
+    B = xyz6d.shape[0]
+    dtype = xyz6d.dtype if np.issubdtype(xyz6d.dtype, np.floating) else np.float64
+    eps = 1e-8
+
+    xyz = xyz6d[:, 0:3]
+    c1 = xyz6d[:, 3:6]
+    c2 = xyz6d[:, 6:9]
+
+    c1n = c1 / np.clip(np.linalg.norm(c1, axis=-1, keepdims=True), eps, None)
+    proj = np.sum(c2 * c1n, axis=-1, keepdims=True) * c1n
+    c2o = c2 - proj
+    c2n = c2o / np.clip(np.linalg.norm(c2o, axis=-1, keepdims=True), eps, None)
+    c3n = np.cross(c1n, c2n)
+
+    mats = np.broadcast_to(np.eye(4, dtype=dtype), (B, 4, 4)).copy()
+    mats[:, :3, 0] = c1n
+    mats[:, :3, 1] = c2n
+    mats[:, :3, 2] = c3n
+    mats[:, :3, 3] = xyz
+    return mats
+
+
+def _xyz6d_cols_to_ypr(c1: np.ndarray, c2: np.ndarray) -> np.ndarray:
+    """Reconstruct [yaw, pitch, roll] from a 6D-rotation column pair (see
+    `_matrix_to_xyz6d`), for callers that still want euler angles (e.g.
+    `_viz_axes`'s rotation-arrow rendering). Any leading shape; last dim of
+    `c1`/`c2` must be 3."""
+    eps = 1e-8
+    c1n = c1 / np.clip(np.linalg.norm(c1, axis=-1, keepdims=True), eps, None)
+    proj = np.sum(c2 * c1n, axis=-1, keepdims=True) * c1n
+    c2o = c2 - proj
+    c2n = c2o / np.clip(np.linalg.norm(c2o, axis=-1, keepdims=True), eps, None)
+    c3n = np.cross(c1n, c2n)
+    mat = np.stack([c1n, c2n, c3n], axis=-1)  # (..., 3, 3): columns c1n, c2n, c3n
+    return R.from_matrix(mat).as_euler("ZYX", degrees=False)
+
+
 def _matrix_to_xyzwxyz(mats: np.ndarray) -> np.ndarray:
     """
     args:
@@ -214,6 +292,12 @@ def _matrix_to_xyz(mats: np.ndarray) -> np.ndarray:
 def _split_action_pose(actions):
     # 14D layout: [L xyz ypr g, R xyz ypr g]
     # 12D layout: [L xyz ypr, R xyz ypr]
+    # 10D / 9D: single-arm (e.g. Piper/human_left_arm cotraining) -- xyz +
+    # continuous 6D rotation (+ gripper, unused here; see _matrix_to_xyz6d --
+    # NOT raw ypr, which wraps at +-pi and destabilizes normalization/bounds
+    # checks). No second arm, so right_xyz/right_ypr come back empty (not
+    # None): downstream draw helpers already treat a zero-length sequence as
+    # "nothing to draw" via `len(seq) == 0` checks.
     if actions.shape[-1] == 14:
         left_xyz = actions[..., :3]
         left_ypr = actions[..., 3:6]
@@ -224,6 +308,17 @@ def _split_action_pose(actions):
         left_ypr = actions[..., 3:6]
         right_xyz = actions[..., 6:9]
         right_ypr = actions[..., 9:12]
+    elif actions.shape[-1] in (9, 10):
+        left_xyz = actions[..., :3]
+        left_ypr = _xyz6d_cols_to_ypr(actions[..., 3:6], actions[..., 6:9])
+        # Empty along the *sequence* axis (len(...) == 0), not the feature
+        # axis -- that's what draw_actions/_draw_rotation_at_anchor's
+        # "nothing to draw" checks actually test.
+        empty_shape = list(actions.shape)
+        empty_shape[-1] = 3
+        empty_shape[-2] = 0
+        right_xyz = np.zeros(empty_shape, dtype=actions.dtype)
+        right_ypr = np.zeros(empty_shape, dtype=actions.dtype)
     else:
         raise ValueError(f"Unsupported action dim {actions.shape[-1]}")
     return left_xyz, left_ypr, right_xyz, right_ypr

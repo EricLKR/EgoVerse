@@ -1,0 +1,53 @@
+{
+  "schema": "assembly_new1_joint_mapping_validation_poses_v1",
+  "dataset": "/media/eric/Database1/KTH/Ego_Project/Data/assembly_task_new1",
+  "episode_index": 0,
+  "fps": 30.0,
+  "candidate": "assets/joint_zero_offset_home_candidate_20261020.json",
+  "route_origin": "assets/initial_pose_follower_physical_on_original_leader.json",
+  "selection_policy": "Three open-gripper, pre-contact poses from frames 0-45 of the existing episode. The task objects have not moved, so image residuals measure camera/arm mapping rather than scene-state changes. No new demonstration is required.",
+  "poses": [
+    {
+      "id": "home_frame0000",
+      "frame_index": 0,
+      "timestamp_s": 0.0,
+      "model_joint_positions_deg": [6.382, 42.863, -27.502, -11.217, 41.812, 7.862],
+      "model_gripper_opening_mm": 99.7,
+      "reference_images": {
+        "front": "assets/joint_mapping_validation_refs/ep0000_frame0000_head.png",
+        "wrist": "assets/joint_mapping_validation_refs/ep0000_frame0000_wrist.png",
+        "side": "assets/joint_mapping_validation_refs/ep0000_frame0000_side.png"
+      },
+      "audited_goal_fk_xyz_mm": [126.2, 10.4, 248.8],
+      "audited_route_min_z_mm": 248.8
+    },
+    {
+      "id": "approach_frame0030",
+      "frame_index": 30,
+      "timestamp_s": 1.0,
+      "model_joint_positions_deg": [-5.681, 55.752, -26.919, -30.819, 25.462, 15.158],
+      "model_gripper_opening_mm": 99.7,
+      "reference_images": {
+        "front": "assets/joint_mapping_validation_refs/ep0000_frame0030_head.png",
+        "wrist": "assets/joint_mapping_validation_refs/ep0000_frame0030_wrist.png",
+        "side": "assets/joint_mapping_validation_refs/ep0000_frame0030_side.png"
+      },
+      "audited_goal_fk_xyz_mm": [170.287, -32.007, 231.476],
+      "audited_route_min_z_mm": 231.476
+    },
+    {
+      "id": "approach_frame0045",
+      "frame_index": 45,
+      "timestamp_s": 1.5,
+      "model_joint_positions_deg": [-5.681, 69.135, -26.919, -30.819, 10.742, 15.028],
+      "model_gripper_opening_mm": 99.7,
+      "reference_images": {
+        "front": "assets/joint_mapping_validation_refs/ep0000_frame0045_head.png",
+        "wrist": "assets/joint_mapping_validation_refs/ep0000_frame0045_wrist.png",
+        "side": "assets/joint_mapping_validation_refs/ep0000_frame0045_side.png"
+      },
+      "audited_goal_fk_xyz_mm": [209.314, -27.101, 200.644],
+      "audited_route_min_z_mm": 200.644
+    }
+  ]
+}

@@ -224,7 +224,8 @@ class ModelWrapper(LightningModule):
             f"Rank {self.global_rank} on validation end, waiting for all ranks to synchronize",
             flush=True,
         )
-        torch.distributed.barrier()
+        if torch.distributed.is_available() and torch.distributed.is_initialized():
+            torch.distributed.barrier()
         print(
             f"Rank {self.global_rank} on validation end, all ranks synchronized",
             flush=True,
@@ -240,11 +241,18 @@ class ModelWrapper(LightningModule):
         :return: A dict containing the configured optimizers and learning-rate schedulers to be used for training.
         """
         config_tree = getattr(self.hparams, "config_tree", None)
+        trainable_params = [
+            parameter
+            for parameter in self.trainer.model.parameters()
+            if parameter.requires_grad
+        ]
+        if not trainable_params:
+            raise RuntimeError("Model has no trainable parameters")
         if config_tree is not None:
             cfg = self._as_config(config_tree)
             optimizer = hydra.utils.instantiate(
                 cfg.model.optimizer,
-                params=self.trainer.model.parameters(),
+                params=trainable_params,
             )
             if callable(optimizer):
                 optimizer = optimizer()
@@ -259,7 +267,7 @@ class ModelWrapper(LightningModule):
             else:
                 scheduler = None
         else:
-            optimizer = self.hparams.optimizer(params=self.trainer.model.parameters())
+            optimizer = self.hparams.optimizer(params=trainable_params)
             scheduler = (
                 self.hparams.scheduler(optimizer=optimizer)
                 if self.hparams.scheduler is not None
@@ -283,7 +291,8 @@ class ModelWrapper(LightningModule):
             f"Rank {self.global_rank} on fit start, waiting for all ranks to synchronize",
             flush=True,
         )
-        torch.distributed.barrier()
+        if torch.distributed.is_available() and torch.distributed.is_initialized():
+            torch.distributed.barrier()
         print(
             f"Rank {self.global_rank} on fit start, all ranks synchronized", flush=True
         )

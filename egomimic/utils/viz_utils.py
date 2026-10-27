@@ -154,15 +154,16 @@ def _viz_traj(image, actions, intrinsics, **kwargs):
         intrinsics=intrinsics,
         arm="left",
     )
-    overlay = draw_actions(
-        overlay,
-        type="xyz",
-        color=color,
-        actions=right_xyz,
-        extrinsics=None,
-        intrinsics=intrinsics,
-        arm="right",
-    )
+    if len(right_xyz) > 0:  # single-arm data (see _split_action_pose) has none to draw
+        overlay = draw_actions(
+            overlay,
+            type="xyz",
+            color=color,
+            actions=right_xyz,
+            extrinsics=None,
+            intrinsics=intrinsics,
+            arm="right",
+        )
     if alpha < 1.0:
         vis = cv2.addWeighted(overlay, alpha, base, 1.0 - alpha, 0)
     else:
@@ -559,3 +560,17 @@ def get_gaze_endpoint(yaw_rads, pitch_rads, depth, T_cam_cpf):
     endpoint_cpf_h = np.concatenate([gaze_vec_cpf, np.array([1.0], dtype=np.float64)])
     endpoint_cam_h = T_cam_cpf @ endpoint_cpf_h
     return endpoint_cam_h[:3]
+
+
+def viz_passthrough(predictions, batch, image_key="observations.images.front_img_1", **_ignored):
+    """No-op eval-video visualization: returns the raw batch images with no
+    action overlay. Metrics/loss are computed independently of this (see
+    eval_hpt.py's compute_metrics_and_viz) -- this only replaces the debug
+    video frame, for cases where the trajectory-overlay path can't render
+    (e.g. it errored on this embodiment's action layout or intrinsics).
+    ``**_ignored`` swallows the other viz_func config keys (action_key,
+    annotation_key, mode, ...) so this can drop in for any existing entry."""
+    from egomimic.utils.type_utils import _to_numpy
+
+    images = _to_numpy(batch[image_key])  # (B, C, H, W) batch, not a single frame
+    return np.stack([_prepare_viz_image(images[i]) for i in range(images.shape[0])], axis=0)

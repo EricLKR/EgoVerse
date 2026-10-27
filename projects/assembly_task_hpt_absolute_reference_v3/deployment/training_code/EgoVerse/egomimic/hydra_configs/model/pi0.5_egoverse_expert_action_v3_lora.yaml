@@ -1,0 +1,21 @@
+defaults:
+  - pi0.5_egoverse_expert_action_v3
+  - _self_
+
+robomimic_model:
+  _target_: egomimic.algo.pi_egoverse_expert_action_v3_lora.PIEgoVerseExpertActionV3LoRA
+  lora:
+    rank: 16
+    alpha: 32.0
+    dropout: 0.05
+    vision_last_n_blocks: 2
+    train_multimodal_projector: true
+    train_action_projections: true
+    train_camera_slot_embeddings: true
+
+optimizer:
+  lr: 1e-4
+
+scheduler:
+  num_warmup_steps: 200
+  num_training_steps: 3000

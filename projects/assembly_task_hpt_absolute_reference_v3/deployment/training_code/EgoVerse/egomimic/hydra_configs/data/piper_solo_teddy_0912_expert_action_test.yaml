@@ -1,0 +1,17 @@
+defaults:
+  - piper_solo_teddy_0912_expert_action_v3
+  - _self_
+
+# Independent held-out session 7.  This preserves the expert-action V3/V4
+# key map (joint + camera-frame pose + both images) while changing only the
+# validation split.  Session 7 is never used for checkpoint selection.
+valid_datasets:
+  piper_left_arm:
+    filters:
+      filter_lambdas:
+        - "lambda row: row['task_name'] == 'teddy_0912_7'"
+
+train_dataloader_params:
+  piper_left_arm: {batch_size: 1, num_workers: 4}
+valid_dataloader_params:
+  piper_left_arm: {batch_size: 1, num_workers: 4}

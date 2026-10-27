@@ -1,0 +1,121 @@
+_target_: egomimic.pl_utils.pl_data_utils.MultiDataModuleWrapper
+
+# Cotraining Piper (robot, 30 teddy-bear-basket episodes) with Aria Gen2 human
+# hand data (20 episodes, same task). Both local-only (no SQL/S3), both via
+# LocalEpisodeResolver. Human side uses human_single_arm.py, NOT human.py's
+# own get_keymap/get_transform_list -- Human's cartesian mode is bimanual-only
+# (unconditionally expects both left.* and right.* zarr keys) and this data is
+# single-arm-only (human_left_arm, no right.* keys at all in the store). See
+# egomimic/rldb/embodiment/human_single_arm.py's docstring for why this is a
+# separate module rather than a change to human.py.
+train_datasets:
+  piper_left_arm:
+    _target_: egomimic.rldb.zarr.zarr_dataset_multi.MultiDataset._from_resolver
+    resolver:
+      _target_: egomimic.rldb.zarr.zarr_dataset_multi.LocalEpisodeResolver
+      folder_path: /mnt/wd10/tongxi/egoverse_piper/EgoVerse/data/piper_zarr_teddy_bear
+      key_map:
+        _target_: egomimic.rldb.embodiment.piper.Piper.get_keymap
+        keymap_mode: cartesian_base
+      transform_list:
+        _target_: egomimic.rldb.embodiment.piper.Piper.get_transform_list
+        mode: cartesian_wristframe
+    filters:
+      _target_: egomimic.rldb.filters.DatasetFilter
+      # Episodes 0-23 (matches the 80/20 split used for the lerobot ACT
+      # fine-tune baseline on this same merged dataset).
+      filter_lambdas:
+        - "lambda row: int(row['episode_hash'].rsplit('ep', 1)[-1]) < 24"
+    mode: total
+  human_left_arm:
+    _target_: egomimic.rldb.zarr.zarr_dataset_multi.MultiDataset._from_resolver
+    resolver:
+      _target_: egomimic.rldb.zarr.zarr_dataset_multi.LocalEpisodeResolver
+      folder_path: /mnt/wd10/tongxi/egoverse_jepa/aria_gen2_data/zarr
+      key_map:
+        _target_: egomimic.rldb.embodiment.human_single_arm.get_keymap
+        keymap_mode: cartesian_padded
+        has_head_pose: true
+        arm: left
+      transform_list:
+        _target_: egomimic.rldb.embodiment.human_single_arm.get_transform_list
+        mode: cartesian_padded
+        # stride=1: this dataset (aria_gen2_data/zarr, current version) is
+        # genuine native 30fps -- verified via obs_rgb_timestamps_ns (median
+        # dt=0.0333s across all 20 episodes). stride=3 (the old default,
+        # inherited from a since-replaced dataset that really was only
+        # 10fps -- see the .Trash-1003 predecessor, dt=0.1s uniform) would
+        # throw away 2/3 of genuine samples before interpolating, degrading
+        # this data back down to 10fps-equivalent resolution for no reason.
+        # Piper's own action side already uses stride=1 (native, no
+        # subsampling) -- this now matches.
+        stride: 1
+        arm: left
+    filters:
+      _target_: egomimic.rldb.filters.DatasetFilter
+      # 16/20 episodes train, matching the ~80/20 split used for Piper.
+      filter_lambdas:
+        - "lambda row: int(row['episode_hash'].rsplit('_', 1)[-1]) % 5 != 0"
+    mode: total
+
+valid_datasets:
+  piper_left_arm:
+    _target_: egomimic.rldb.zarr.zarr_dataset_multi.MultiDataset._from_resolver
+    resolver:
+      _target_: egomimic.rldb.zarr.zarr_dataset_multi.LocalEpisodeResolver
+      folder_path: /mnt/wd10/tongxi/egoverse_piper/EgoVerse/data/piper_zarr_teddy_bear
+      key_map:
+        _target_: egomimic.rldb.embodiment.piper.Piper.get_keymap
+        keymap_mode: cartesian_base
+      transform_list:
+        _target_: egomimic.rldb.embodiment.piper.Piper.get_transform_list
+        mode: cartesian_wristframe
+    filters:
+      _target_: egomimic.rldb.filters.DatasetFilter
+      filter_lambdas:
+        - "lambda row: int(row['episode_hash'].rsplit('ep', 1)[-1]) >= 24"
+    mode: total
+  human_left_arm:
+    _target_: egomimic.rldb.zarr.zarr_dataset_multi.MultiDataset._from_resolver
+    resolver:
+      _target_: egomimic.rldb.zarr.zarr_dataset_multi.LocalEpisodeResolver
+      folder_path: /mnt/wd10/tongxi/egoverse_jepa/aria_gen2_data/zarr
+      key_map:
+        _target_: egomimic.rldb.embodiment.human_single_arm.get_keymap
+        keymap_mode: cartesian_padded
+        has_head_pose: true
+        arm: left
+      transform_list:
+        _target_: egomimic.rldb.embodiment.human_single_arm.get_transform_list
+        mode: cartesian_padded
+        # stride=1: this dataset (aria_gen2_data/zarr, current version) is
+        # genuine native 30fps -- verified via obs_rgb_timestamps_ns (median
+        # dt=0.0333s across all 20 episodes). stride=3 (the old default,
+        # inherited from a since-replaced dataset that really was only
+        # 10fps -- see the .Trash-1003 predecessor, dt=0.1s uniform) would
+        # throw away 2/3 of genuine samples before interpolating, degrading
+        # this data back down to 10fps-equivalent resolution for no reason.
+        # Piper's own action side already uses stride=1 (native, no
+        # subsampling) -- this now matches.
+        stride: 1
+        arm: left
+    filters:
+      _target_: egomimic.rldb.filters.DatasetFilter
+      filter_lambdas:
+        - "lambda row: int(row['episode_hash'].rsplit('_', 1)[-1]) % 5 == 0"
+    mode: total
+
+train_dataloader_params:
+  piper_left_arm:
+    batch_size: 8
+    num_workers: 4
+  human_left_arm:
+    batch_size: 8
+    num_workers: 4
+valid_dataloader_params:
+  piper_left_arm:
+    batch_size: 8
+    num_workers: 4
+  human_left_arm:
+    batch_size: 8
+    num_workers: 4

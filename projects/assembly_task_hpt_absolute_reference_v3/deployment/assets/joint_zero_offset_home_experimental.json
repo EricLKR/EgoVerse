@@ -1,0 +1,25 @@
+{
+  "schema": "assembly_new1_joint_zero_offset_v1",
+  "created_utc": "2026-10-21T00:00:00Z",
+  "status": "experimental_unvalidated",
+  "source": "assets/joint_zero_offset_home_candidate_20261020.json",
+  "hardware_minus_model_joint_offset_deg": [
+    0.0,
+    0.0,
+    0.0,
+    7.670197786564556,
+    -0.6840729922932312,
+    -5.13757179923188
+  ],
+  "multi_pose_validation": {
+    "required": true,
+    "passed": false,
+    "pose_count": 3,
+    "failed_pose_ids": [
+      "home",
+      "frame30",
+      "frame45"
+    ],
+    "warning": "Home-only visual candidate. It failed the three-pose acceptance test and is available only through the explicit experimental launcher."
+  }
+}

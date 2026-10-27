@@ -1,0 +1,52 @@
+{
+  "joint_0": {
+    "id": 0,
+    "drive_mode": 0,
+    "homing_offset": 0,
+    "range_min": -151000,
+    "range_max": 151000
+  },
+  "joint_1": {
+    "id": 1,
+    "drive_mode": 0,
+    "homing_offset": 0,
+    "range_min": 3000,
+    "range_max": 177000
+  },
+  "joint_2": {
+    "id": 2,
+    "drive_mode": 0,
+    "homing_offset": 0,
+    "range_min": -167000,
+    "range_max": -3000
+  },
+  "joint_3": {
+    "id": 3,
+    "drive_mode": 0,
+    "homing_offset": 0,
+    "range_min": -124000,
+    "range_max": 124000
+  },
+  "joint_4": {
+    "id": 4,
+    "drive_mode": 0,
+    "homing_offset": 0,
+    "range_min": -86500,
+    "range_max": 86500
+  },
+  "joint_5": {
+    "id": 5,
+    "drive_mode": 0,
+    "homing_offset": 0,
+    "range_min": -167000,
+    "range_max": 167000
+  },
+  "gripper": {
+    "id": 6,
+    "drive_mode": 0,
+    "homing_offset": 0,
+    "range_min": 0,
+    "range_max": 104900
+  },
+  "source": "2026-10-21 firmware-recalibrated original leader arm used on can_follower; numeric software limits inherited from assets/piper_original_leader_calibration.json because the firmware limit query returned six duplicate motor-6 records; provisional and not valid for deployment until multi-pose validation passes"
+}

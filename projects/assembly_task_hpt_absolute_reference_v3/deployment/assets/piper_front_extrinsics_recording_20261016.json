@@ -1,0 +1,56 @@
+{
+  "status": "recording_calibration",
+  "verification_mode": "user_manual_acceptance_with_quantitative_held_out_reprojection",
+  "formal_mixed_training_allowed": true,
+  "camera_key": "head",
+  "camera_serial": "337322071261",
+  "matrix_convention": "base_world_from_camera_4x4",
+  "matrix": [
+    [-0.00874432612051805, -0.9132745033831536, 0.40725080507096945, 0.0037450867024673303],
+    [-0.9998603104774829, 0.002184073075407758, -0.01657073796405628, 0.354080121321668],
+    [0.014244166966522254, -0.4073388163372796, -0.9131660267510912, 0.7505320772228044],
+    [0.0, 0.0, 0.0, 1.0]
+  ],
+  "rotation_determinant": 1.000000000000001,
+  "rotation_orthonormality_max_error": 6.661338147750939e-16,
+  "translation_norm_m": 0.8298705663716202,
+  "source_dataset": "/media/eric/Database1/KTH/Ego_Project/Data/assembly_task_new1",
+  "source_file": "meta/head_cam_to_follower_base.calib",
+  "source_sha256": "83973d7b0ebc82e0fbb4d6112e445d36f3c875d1542aaa93a5a2c3a12b571198",
+  "calibration_name": "head_cam_to_follower_base_scene2_corners_2026-10-16",
+  "base_frame": "base_link",
+  "camera_frame": "camera_color_optical_frame",
+  "robot_effector_frame": "link6",
+  "translation_unit": "m",
+  "point_convention": "homogeneous column vectors; p_base = matrix @ p_camera",
+  "quantitative_held_out_reprojection": {
+    "pose_count": 5,
+    "frames_per_pose": 8,
+    "candidate_better_on_pose_count": 5,
+    "candidate_rms_px": 14.117838148615318,
+    "candidate_median_px": 6.254359195814297,
+    "candidate_max_px": 29.205108408677873,
+    "original_rms_px": 25.62964005982248,
+    "original_median_px": 17.440732095274402,
+    "original_max_px": 43.88116490634542,
+    "rms_reduction_fraction": 0.4491573796607967,
+    "worst_pose_candidate_rms_px": 27.348,
+    "metric_scope": "pixel reprojection comparison only; not an absolute millimetre accuracy measurement"
+  },
+  "validation_delivery": {
+    "root": "assets/calibration_delivery_20261018/piper_l_d435f_scene2_2026-10-16_report_2026-10-18",
+    "report": "calibration_report.md",
+    "report_sha256": "ba730f1d0682530cbc69a543e5717b5df577d726b56281fa32e3482be94a2b4b",
+    "held_out_report": "evidence/new_pose_validation.report.md",
+    "held_out_report_sha256": "78d863e643c8aee506954c4b654cf19b2499906fb3f10dc6a252af490113c2ad",
+    "portable_result": "results/extrinsics.json",
+    "portable_result_sha256": "9462adad6e3cdc37e70b7051d29f2e8892a9539f7a0e46010a04a3b011f26a4a"
+  },
+  "manual_acceptance": {
+    "accepted": true,
+    "accepted_at": "2026-10-18T03:00:47+02:00",
+    "accepted_by": "Kerun Liu",
+    "basis": "User previously reported the held-out test had no observed problem and explicitly chose user manual acceptance. The delivered quantitative report is retained without upgrading it to an absolute-accuracy claim."
+  },
+  "notes": "The matrix is byte-identical to the .calib embedded with the recording and the 2026-10-18 delivery. Independent 5-pose reprojection comparison favors the candidate on all poses, but residuals remain and the report explicitly does not establish millimetre-level absolute accuracy. Formal use is authorized by explicit user manual acceptance, not by an automatic numerical pass threshold."
+}

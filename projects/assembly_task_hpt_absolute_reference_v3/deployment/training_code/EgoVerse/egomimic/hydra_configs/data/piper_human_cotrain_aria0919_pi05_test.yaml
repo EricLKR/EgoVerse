@@ -1,0 +1,24 @@
+defaults:
+  - piper_human_cotrain_aria0919_joint
+  - _self_
+
+# Keep the original training datasets solely to reconstruct the data schematic;
+# normalization is loaded from the selected training run.  Only these held-out
+# valid datasets are evaluated.
+valid_datasets:
+  piper_left_arm:
+    filters:
+      filter_lambdas:
+        - "lambda row: row['task_name'] == 'teddy_0912_7'"
+  human_left_arm:
+    filters:
+      filter_lambdas:
+        - "lambda row: row['task_name'] == 'put_bear_0919_test'"
+
+train_dataloader_params:
+  piper_left_arm: {batch_size: 1, num_workers: 4}
+  human_left_arm: {batch_size: 1, num_workers: 4}
+valid_dataloader_params:
+  piper_left_arm: {batch_size: 1, num_workers: 4}
+  human_left_arm: {batch_size: 1, num_workers: 4}
+

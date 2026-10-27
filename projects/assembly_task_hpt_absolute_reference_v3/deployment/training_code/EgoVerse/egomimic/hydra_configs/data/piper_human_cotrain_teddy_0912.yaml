@@ -1,0 +1,99 @@
+_target_: egomimic.pl_utils.pl_data_utils.MultiDataModuleWrapper
+
+# UNTESTED (constructed from piper_human_cotrain_camframe.yaml as a template, not yet
+# run). Same Aria Gen2 human data (20 episodes) as piper_human_cotrain_camframe.yaml,
+# cotrained against the fresh 2026-09-12 teleop collection instead of the older
+# piper_zarr_teddy_bear set -- see PIPER_TRAINING.md Sec 1b for how piper_zarr_teddy_0912
+# was produced (piper_lerobot_to_zarr.py conversion of Data_Collect/teddy_0912_1..7).
+# Both sides use cartesian_camframe -- the papers' canonical shared cross-embodiment
+# representation -- per piper.py / human_single_arm.py's get_transform_list docstrings.
+train_datasets:
+  piper_left_arm:
+    _target_: egomimic.rldb.zarr.zarr_dataset_multi.MultiDataset._from_resolver
+    resolver:
+      _target_: egomimic.rldb.zarr.zarr_dataset_multi.LocalEpisodeResolver
+      folder_path: /mnt/wd10/tongxi/egoverse_piper/EgoVerse/data/piper_zarr_teddy_0912
+      key_map:
+        _target_: egomimic.rldb.embodiment.piper.Piper.get_keymap
+        keymap_mode: cartesian_base
+      transform_list:
+        _target_: egomimic.rldb.embodiment.piper.Piper.get_transform_list
+        mode: cartesian_camframe
+    filters:
+      _target_: egomimic.rldb.filters.DatasetFilter
+      filter_lambdas:
+        - "lambda row: int(row['episode_hash'].rsplit('ep', 1)[-1]) < 8"
+    mode: total
+  human_left_arm:
+    _target_: egomimic.rldb.zarr.zarr_dataset_multi.MultiDataset._from_resolver
+    resolver:
+      _target_: egomimic.rldb.zarr.zarr_dataset_multi.LocalEpisodeResolver
+      folder_path: /mnt/wd10/tongxi/egoverse_jepa/aria_gen2_data/zarr
+      key_map:
+        _target_: egomimic.rldb.embodiment.human_single_arm.get_keymap
+        keymap_mode: cartesian_camframe_padded
+        has_head_pose: true
+        arm: left
+      transform_list:
+        _target_: egomimic.rldb.embodiment.human_single_arm.get_transform_list
+        mode: cartesian_camframe_padded
+        stride: 1
+        arm: left
+    filters:
+      _target_: egomimic.rldb.filters.DatasetFilter
+      filter_lambdas:
+        - "lambda row: int(row['episode_hash'].rsplit('_', 1)[-1]) % 5 != 0"
+    mode: total
+
+valid_datasets:
+  piper_left_arm:
+    _target_: egomimic.rldb.zarr.zarr_dataset_multi.MultiDataset._from_resolver
+    resolver:
+      _target_: egomimic.rldb.zarr.zarr_dataset_multi.LocalEpisodeResolver
+      folder_path: /mnt/wd10/tongxi/egoverse_piper/EgoVerse/data/piper_zarr_teddy_0912
+      key_map:
+        _target_: egomimic.rldb.embodiment.piper.Piper.get_keymap
+        keymap_mode: cartesian_base
+      transform_list:
+        _target_: egomimic.rldb.embodiment.piper.Piper.get_transform_list
+        mode: cartesian_camframe
+    filters:
+      _target_: egomimic.rldb.filters.DatasetFilter
+      filter_lambdas:
+        - "lambda row: int(row['episode_hash'].rsplit('ep', 1)[-1]) >= 8"
+    mode: total
+  human_left_arm:
+    _target_: egomimic.rldb.zarr.zarr_dataset_multi.MultiDataset._from_resolver
+    resolver:
+      _target_: egomimic.rldb.zarr.zarr_dataset_multi.LocalEpisodeResolver
+      folder_path: /mnt/wd10/tongxi/egoverse_jepa/aria_gen2_data/zarr
+      key_map:
+        _target_: egomimic.rldb.embodiment.human_single_arm.get_keymap
+        keymap_mode: cartesian_camframe_padded
+        has_head_pose: true
+        arm: left
+      transform_list:
+        _target_: egomimic.rldb.embodiment.human_single_arm.get_transform_list
+        mode: cartesian_camframe_padded
+        stride: 1
+        arm: left
+    filters:
+      _target_: egomimic.rldb.filters.DatasetFilter
+      filter_lambdas:
+        - "lambda row: int(row['episode_hash'].rsplit('_', 1)[-1]) % 5 == 0"
+    mode: total
+
+train_dataloader_params:
+  piper_left_arm:
+    batch_size: 8
+    num_workers: 4
+  human_left_arm:
+    batch_size: 8
+    num_workers: 4
+valid_dataloader_params:
+  piper_left_arm:
+    batch_size: 8
+    num_workers: 4
+  human_left_arm:
+    batch_size: 8
+    num_workers: 4

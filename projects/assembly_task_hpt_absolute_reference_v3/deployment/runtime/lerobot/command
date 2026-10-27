@@ -1,0 +1,161 @@
+# ==============================================================================
+# Piper arm + lerobot cheat sheet
+# Run these blocks top to bottom, in order, from a shell. They are notes, not
+# a script — copy/paste each block into a terminal (or several terminals) as
+# needed; don't `bash command` the whole file.
+# ==============================================================================
+
+# ------------------------------------------------------------------
+# 1) Calibrate joint limits for each arm (run once per arm, or whenever
+#    limits need re-checking). Move the arm through its full range by hand
+#    while the script logs min/max joint angles.
+#    - follower arm: default --source (reads from the arm itself)
+#    - leader arm:   needs --source=ctrl (see the script's docstring for why)
+# ------------------------------------------------------------------
+python examples/piper/find_real_joint_limits.py --port=can_follower
+python examples/piper/find_real_joint_limits.py --port=can_leader --source=ctrl   # leader needs --source=ctrl, see its docstring
+
+# ------------------------------------------------------------------
+# 2) Teleoperate: drive the follower arm live with the leader arm.
+#    Plug in the --robot.joint_limits_deg / --teleop.joint_limits_deg values
+#    measured in step 1 above for each arm.
+# ------------------------------------------------------------------
+lerobot-teleoperate   --robot.type=piper --robot.port=can_follower --robot.speed_percent=15   --robot.gripper_stroke_mm=102.8   --robot.joint_limits_deg='[[-151.0,151.0],[0.9,186.0],[-170.1,-1.0],[-124.2,124.9],[-85.0,87.7],[-168.4,168.4]]'   --robot.id=my_piper_follower   --teleop.type=piper_leader --teleop.port=can_leader   --teleop.gripper_stroke_mm=104.9   --teleop.joint_limits_deg='[[-151.0,151.0],[3.0,177.0],[-167.0,-3.0],[-124.0,124.0],[-86.5,86.5],[-167.0,167.0]]'
+
+# ------------------------------------------------------------------
+# 3) Bring up the CAN interfaces for the leader and follower arms.
+#    Run `ip -details link show type can` before/after each activation to
+#    confirm the interface came up (state UP, correct bitrate/USB path).
+#    Args to can_activate.sh: <interface_name> <bitrate> <usb_port_path>
+#    (usb port path identifies which physical USB port each arm is on —
+#    check with `dmesg` or your dock's labeling if you re-plug cables).
+# ------------------------------------------------------------------
+ip -details link show type can
+bash /mnt/wd10/tongxi/Piper_sdk_ui/can_activate.sh can_leader   1000000 "1-11:1.0"
+ip -details link show type can
+bash /mnt/wd10/tongxi/Piper_sdk_ui/can_activate.sh can_follower 1000000 "1-1:1.0"
+ip -details link show type can
+
+# ------------------------------------------------------------------
+# 4) Emergency/manual torque release for the follower arm — disables the
+#    motors so the arm can be moved freely by hand (e.g. to reset a pose
+#    before teleop/recording, or after a fault). Run inside the `lerobot`
+#    conda env.
+# ------------------------------------------------------------------
+conda activate lerobot
+python -c "
+from piper_sdk import C_PiperInterface_V2
+import time
+piper = C_PiperInterface_V2('can_follower')
+piper.ConnectPort()
+time.sleep(0.1)
+while piper.DisablePiper():
+    time.sleep(0.01)
+print('Torque released.')
+"
+
+# ------------------------------------------------------------------
+# 5) Evaluate/roll out a trained ACT policy checkpoint on the real follower
+#    arm (no leader/teleop needed — the policy drives the robot). Records
+#    the rollout as a 1-episode dataset for review.
+#    `conda run -n lerobot` runs the command in the lerobot env without
+#    needing `conda activate` first.
+# ------------------------------------------------------------------
+conda run -n lerobot lerobot-record \
+  --robot.type=piper \
+  --robot.port=can_follower\
+  --robot.id=my_piper_follower\
+  --robot.speed_percent=15 \
+  --robot.max_relative_target=8 \
+  --robot.cameras='{
+    435if: {"type": "intelrealsense", "serial_number_or_name": "Intel RealSense D435IF", "width": 1280, "height": 720, "fps": 30},
+    405:   {"type": "intelrealsense", "serial_number_or_name": "Intel RealSense D405",   "width": 848,  "height": 480, "fps": 30}
+  }' \
+  --policy.path=/mnt/wd10/tongxi/lerobot/outputs/train/act_teddy_bear_basket_finetune/checkpoints/040000/pretrained_model \
+  --dataset.repo_id=yukk1/eval_piper_act_rollout_review \
+  --dataset.num_episodes=1 \
+  --dataset.single_task="Put the teddy bear into the basket" \
+  --display_data=true
+
+
+# ------------------------------------------------------------------
+# 6) Collect a real teleop demonstration dataset (leader arm drives the
+#    follower via teleop while both cameras record). This is the main data
+#    -collection command: 10 episodes, pushed to the Hub afterward.
+#    Camera serial numbers are pinned here (327122075831 / 427622273943)
+#    instead of the generic device names used above — use this form when
+#    multiple RealSense cameras are plugged in and you need to disambiguate.
+# ------------------------------------------------------------------
+lerobot-record \
+  --robot.type=piper \
+  --robot.port=can_follower \
+  --robot.id=my_piper_follower \
+  --robot.speed_percent=30 \
+  --robot.cameras='{
+    "435if": {"type": "intelrealsense", "serial_number_or_name": "327122075831", "color_mode": "RGB", "use_depth": true, "rotation": 0, "warmup_s": 5, "width": 1280, "height": 720, "fps": 30},
+    "405":   {"type": "intelrealsense", "serial_number_or_name": "427622273943", "color_mode": "RGB", "use_depth": true, "rotation": 0, "warmup_s": 5, "width": 848, "height": 480, "fps": 30}
+  }' \
+  --teleop.type=piper_leader \
+  --teleop.port=can_leader \
+  --teleop.id=my_piper_leader \
+  --dataset.repo_id=yukk1/pick_and_place_v1_10_2 \
+  --dataset.single_task="Put the teddy bear into the basket" \
+  --dataset.num_episodes=10 \
+  --dataset.fps=30 \
+  --dataset.episode_time_s=60 \
+  --dataset.reset_time_s=15 \
+  --dataset.push_to_hub=true \
+  --dataset.private=false \
+  --display_data=true
+
+# ------------------------------------------------------------------
+# 7) Replay a previously recorded dataset episode on the real follower arm
+#    (e.g. to sanity-check that a recorded episode looks right physically).
+#    --dataset.episode selects which episode index to replay.
+# ------------------------------------------------------------------
+lerobot-replay \
+  --robot.type=piper \
+  --robot.port=can_follower \
+  --robot.id=my_piper_follower \
+  --robot.speed_percent=30 \
+  --dataset.repo_id=yukk1/pick_and_place_2 \
+  --dataset.episode=7
+
+# Local cache path where a pushed/pulled dataset ends up on disk (for
+# browsing files directly instead of via the Hub):
+/home/master-ht/.cache/huggingface/lerobot/yukk1/pick_and_place_1
+
+# ------------------------------------------------------------------
+# 8) Evaluate/roll out an EgoVerse HPT policy checkpoint instead of ACT.
+#    Requires the separate "emimic" venv (not the `lerobot` conda env) —
+#    source it first. NOTE: multiple similarly-named emimic venvs exist on
+#    this machine; verify this is the correct training/deployment env
+#    (e.g. by checking VIRTUAL_ENV of a live process) before trusting it
+#    blindly.
+#    Extra policy.* flags vs. the ACT example above:
+#      --policy.type=egoverse_hpt        selects the HPT policy class
+#      --policy.ckpt_path=...            path to the HPT checkpoint (.ckpt)
+#      --policy.action_frame=wristframe  action space the policy was trained in
+#      --policy.joint_limits_deg=...     joint limits used by the policy/robot
+#      --policy.device=cuda              run inference on GPU
+# ------------------------------------------------------------------
+source /mnt/wd10/tongxi/egoverse_piper/EgoVerse/emimic/bin/activate
+lerobot-record \
+  --robot.type=piper \
+  --robot.port=can_follower \
+  --robot.id=my_piper_follower \
+  --robot.speed_percent=15 \
+  --robot.max_relative_target=8 \
+  --robot.cameras='{
+    435if: {"type": "intelrealsense", "serial_number_or_name": "Intel RealSense D435IF", "width": 1280, "height": 720, "fps": 30},
+    405:   {"type": "intelrealsense", "serial_number_or_name": "Intel RealSense D405",   "width": 848,  "height": 480, "fps": 30}
+  }' \
+  --policy.type=egoverse_hpt \
+  --policy.ckpt_path=/mnt/wd10/tongxi/egoverse_piper/EgoVerse/egomimic/logs/hpt_cotrain_piper_human/wristframe_fullfps_2026-08-22_02-13-35/checkpoints/last.ckpt \
+  --policy.action_frame=wristframe \
+  --policy.joint_limits_deg='[[-154.6,150.0],[-2.1,191.1],[-173.4,2.0],[-135.4,119.8],[-88.8,89.9],[-170.6,172.3]]' \
+  --policy.device=cuda \
+  --dataset.repo_id=yukk1/eval_piper_hpt_rollout_review \
+  --dataset.num_episodes=1 \
+  --dataset.single_task="Put the teddy bear into the basket" \
+  --display_data=true

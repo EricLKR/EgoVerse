@@ -16,8 +16,8 @@ from egomimic.utils.viz_utils import (
 
 
 class EMBODIMENT(Enum):
-    # All human demonstration data is one embodiment (HUMAN_*); the robot Eva is
-    # the only non-human embodiment. There is NO vendor/source notion at the
+    # All human demonstration data is one embodiment (HUMAN_*); Eva and Piper are
+    # the non-human embodiments. There is NO vendor/source notion at the
     # embodiment level — the data source is recorded only in the SQL `lab` field.
     HUMAN_RIGHT_ARM = 1
     HUMAN_LEFT_ARM = 2
@@ -25,6 +25,12 @@ class EMBODIMENT(Enum):
     EVA_RIGHT_ARM = 4
     EVA_LEFT_ARM = 5
     EVA_BIMANUAL = 6
+    # AgileX PIPER-L, single arm, mounted left. Side (right/left) reflects
+    # physical mounting, not the "L" in "PIPER-L" (that's AgileX's hardware SKU,
+    # not handedness — see egomimic/robot/piper/piper_kinematics.py). Confirmed
+    # left-mounted for the yukk1/pick_and_place_* recordings. Add PIPER_RIGHT_ARM
+    # / PIPER_BIMANUAL following the same pattern if a second arm joins this rig.
+    PIPER_LEFT_ARM = 7
 
 
 EMBODIMENT_ID_TO_KEY = {member.value: member.name for member in EMBODIMENT}

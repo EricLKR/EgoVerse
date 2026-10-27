@@ -1,0 +1,20 @@
+parameters:
+  name: head_cam_to_follower_base_scene2_corners_2026-10-16
+  calibration_type: eye_on_base
+  robot_base_frame: base_link
+  robot_effector_frame: link6
+  tracking_base_frame: camera_color_optical_frame
+  tracking_marker_frame: tag_0
+  freehand_robot_movement: true
+  move_group_namespace: /
+  move_group: manipulator
+transform:
+  translation:
+    x: 0.0037450867024673303
+    y: 0.354080121321668
+    z: 0.7505320772228044
+  rotation:
+    x: -0.6896081545985309
+    y: 0.6935586539628456
+    z: -0.15280234479059823
+    w: 0.14166308640909148

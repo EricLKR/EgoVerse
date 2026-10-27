@@ -1,0 +1,13 @@
+{
+  "joint_positions_deg": [
+    6.46,
+    42.912,
+    -27.554,
+    -11.212,
+    41.809,
+    7.905
+  ],
+  "gripper_opening_mm": 99.7,
+  "source": "assets/reset_control.json.initial_pose",
+  "task": "Assembly New1"
+}

@@ -1,0 +1,11 @@
+defaults:
+  - piper_solo_teddy_0912_joint_test
+  - _self_
+
+# Independent session 7.  Batch size one keeps full pi0.5 sampling evaluation
+# inside one GH200 while preserving per-frame metric weighting.
+train_dataloader_params:
+  piper_left_arm: {batch_size: 1, num_workers: 4}
+valid_dataloader_params:
+  piper_left_arm: {batch_size: 1, num_workers: 4}
+

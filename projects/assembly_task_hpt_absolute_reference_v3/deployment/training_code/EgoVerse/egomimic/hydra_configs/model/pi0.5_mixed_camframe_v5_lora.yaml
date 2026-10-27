@@ -1,0 +1,115 @@
+defaults:
+  - pi0.5_base
+  - _self_
+
+robomimic_model:
+  _target_: egomimic.algo.pi_egoverse_mixed_camframe_v5.PIEgoVerseMixedCamFrameV5LoRA
+  camera_transforms: {}
+  domains: [piper_left_arm, human_left_arm]
+  observation_history: 1
+  auxiliary_joint_key: actions_joints
+  piper_embodiment: piper_left_arm
+  human_embodiment: human_left_arm
+
+  shared_pose_loss_weight: 1.0
+  piper_joint_flow_loss_weight: 1.0
+  piper_auxiliary_loss_weight: 1.0
+  piper_pose_flow_weight: 0.5
+  # V5 uses the explicit schedule below instead of the inherited fixed value.
+  human_pose_flow_weight: 1.0
+  human_pose_final_weight: 0.30
+  human_pose_ramp_steps: 2500
+  # PIPER is used every optimizer step; Human is used every second step.
+  # This gives a true 2:1 update ratio without increasing the memory-bound batch.
+  human_update_interval: 2
+  piper_wrist_dropout_probability: 0.35
+
+  ac_keys:
+    piper_left_arm: actions_cartesian_pose
+    human_left_arm: actions_cartesian_pose
+  action_converters:
+    rules:
+      PIPER_LEFT_ARM:
+        _target_: egomimic.utils.action_utils.HumanLeftXYZ6DActionConverter
+      HUMAN_LEFT_ARM:
+        _target_: egomimic.utils.action_utils.HumanLeftXYZ6DActionConverter
+    fallback:
+      _target_: egomimic.utils.action_utils.BaseActionConverter
+
+  camera_slot_maps:
+    piper_left_arm:
+      base_0_rgb: front_img_1
+      left_wrist_0_rgb: wrist_img
+      right_wrist_0_rgb: null
+    human_left_arm:
+      base_0_rgb: front_img_1
+      left_wrist_0_rgb: null
+      right_wrist_0_rgb: null
+
+  default_prompt: "Pick up the teddy bear and place it in the basket."
+  tokenizer_max_length: 128
+  proprio_in_prompt: true
+  embodiment_label: true
+  control_mode:
+    piper: "camera-frame pose plus bounded native PIPER joint trajectory"
+    human: "camera-frame left-hand xyz plus continuous 6D rotation"
+  proprio_keys_for_prompt:
+    piper_left_arm: [observations.state.joints]
+    human_left_arm: [observations.state.ee_pose]
+  gradient_checkpointing: true
+  finetune_mode: action_expert
+  train_multimodal_projector: true
+
+  config:
+    model:
+      action_dim: 32
+      action_horizon: 30
+
+  domain_conditioning:
+    hidden_dim: 512
+    piper_state_dim: 7
+    human_state_dim: 9
+    init_std: 0.02
+
+  auxiliary:
+    expert_dim: 1024
+    gripper_hidden_dim: 256
+    action_horizon: 30
+    # Audited on the PIPER train split; stored in every checkpoint buffer.
+    joint_residual_scale_deg: [100.0, 135.0, 135.0, 160.0, 135.0, 150.0]
+    joint_error_scale_deg: 5.0
+    joint_position_loss_weight: 1.0
+    joint_delta_loss_weight: 0.25
+    joint_acceleration_loss_weight: 0.10
+    joint_jerk_loss_weight: 0.02
+    first_action_loss_weight: 1.0
+    latent_saturation_loss_weight: 0.01
+    latent_saturation_threshold: 0.95
+    camera_position_loss_weight: 0.10
+    camera_rotation_loss_weight: 0.05
+    camera_position_error_scale_m: 0.02
+    rotation_error_scale_deg: 10.0
+    gripper_loss_weight: 1.5
+    gripper_closed_weight: 1.76
+    gripper_open_weight: 0.70
+    gripper_transition_weight: 3.0
+    gripper_transition_radius: 2
+    gripper_open_prior: 0.716
+    joint_dimension_weights: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+    enable_camera_consistency: true
+
+  lora:
+    rank: 16
+    alpha: 32.0
+    dropout: 0.05
+    vision_last_n_blocks: 2
+    train_multimodal_projector: true
+    train_action_projections: true
+    train_camera_slot_embeddings: true
+
+optimizer:
+  lr: 1e-4
+
+scheduler:
+  num_warmup_steps: 500
+  num_training_steps: 20000

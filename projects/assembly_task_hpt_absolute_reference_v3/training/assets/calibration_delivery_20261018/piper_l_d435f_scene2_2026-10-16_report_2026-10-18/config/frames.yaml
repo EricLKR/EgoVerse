@@ -1,0 +1,7 @@
+# 名称来自官方 Piper L 专用 URDF；运行时 TF 与几何验证状态见 PROCESS.md。
+robot_base_frame: base_link
+robot_effector_frame: link6
+robot_description_package: agx_arm_description
+robot_description_file: agx_arm_urdf/piper_l/urdf/piper_l_with_gripper_description.xacro
+tracking_base_frame: camera_color_optical_frame
+tracking_marker_frame: tag_0

@@ -1,0 +1,29 @@
+{
+  "included_source_keys": [
+    "observation.images.head",
+    "observation.images.wrist",
+    "observation.images.side"
+  ],
+  "excluded_source_keys": [
+    "observation.images.aria"
+  ],
+  "zarr_mapping": {
+    "observation.images.head": "images.front_1",
+    "observation.images.wrist": "images.wrist_1",
+    "observation.images.side": "images.side_1"
+  },
+  "serials": {
+    "head": "337322071261",
+    "wrist": "427622273943",
+    "side": "427622272585"
+  },
+  "resolution_hwc": [480, 640, 3],
+  "fps": 30,
+  "intrinsics": {
+    "head": "available_in_piper_intrinsics_head_wrist_640x480.json",
+    "wrist": "available_in_piper_intrinsics_head_wrist_640x480.json",
+    "side": "unavailable_not_consumed_by_image_model"
+  },
+  "head_extrinsics": "piper_front_extrinsics_recording_20261016.json",
+  "phase_sampling": false
+}

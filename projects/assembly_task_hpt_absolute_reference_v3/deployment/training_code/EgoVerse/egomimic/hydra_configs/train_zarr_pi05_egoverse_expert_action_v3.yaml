@@ -1,0 +1,11 @@
+defaults:
+  - train_zarr_cartesian
+  - override model: pi0.5_egoverse_expert_action_v3
+  - override data: piper_human_pi05_expert_action_v3
+  - override trainer: ddp_pi
+  - override evaluator: eval_pi05_expert_action_v3
+  - override hydra/launcher: submitit_pace
+  - _self_
+
+name: pi05_egoverse_expert_action_v3
+description: shared_gemma_expert_pose_joint_native30

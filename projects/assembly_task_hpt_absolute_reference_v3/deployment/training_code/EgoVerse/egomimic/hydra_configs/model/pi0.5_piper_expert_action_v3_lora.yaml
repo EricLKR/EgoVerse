@@ -1,0 +1,86 @@
+defaults:
+  - pi0.5_base
+  - _self_
+
+robomimic_model:
+  _target_: egomimic.algo.pi_egoverse_expert_action_v3_lora.PIEgoVerseExpertActionV3LoRA
+  camera_transforms: {}
+  domains: [piper_left_arm]
+  observation_history: 1
+  auxiliary_joint_key: actions_joints
+  piper_embodiment: piper_left_arm
+
+  shared_pose_loss_weight: 1.0
+  piper_joint_flow_loss_weight: 1.0
+  piper_auxiliary_loss_weight: 1.0
+  piper_pose_flow_weight: 0.5
+  human_pose_flow_weight: 1.0
+
+  ac_keys:
+    piper_left_arm: actions_cartesian_pose
+  action_converters:
+    rules:
+      PIPER_LEFT_ARM:
+        _target_: egomimic.utils.action_utils.HumanLeftXYZ6DActionConverter
+    fallback:
+      _target_: egomimic.utils.action_utils.BaseActionConverter
+
+  camera_slot_maps:
+    piper_left_arm:
+      base_0_rgb: front_img_1
+      left_wrist_0_rgb: wrist_img
+      right_wrist_0_rgb: null
+
+  default_prompt: "Pick up the teddy bear and place it in the basket."
+  tokenizer_max_length: 128
+  control_mode:
+    piper: "camera-frame pose and native PIPER joint residual trajectory"
+  proprio_keys_for_prompt:
+    piper_left_arm: [observations.state.joints]
+  gradient_checkpointing: true
+  finetune_mode: action_expert
+  train_multimodal_projector: true
+
+  config:
+    model:
+      action_dim: 32
+      action_horizon: 30
+
+  auxiliary:
+    expert_dim: 1024
+    gripper_hidden_dim: 256
+    action_horizon: 30
+    joint_residual_scale_deg: 150.0
+    joint_error_scale_deg: 5.0
+    joint_position_loss_weight: 1.0
+    joint_delta_loss_weight: 0.25
+    joint_acceleration_loss_weight: 0.10
+    joint_jerk_loss_weight: 0.02
+    camera_position_loss_weight: 0.10
+    camera_rotation_loss_weight: 0.05
+    camera_position_error_scale_m: 0.02
+    rotation_error_scale_deg: 10.0
+    gripper_loss_weight: 1.5
+    gripper_closed_weight: 1.76
+    gripper_open_weight: 0.70
+    gripper_transition_weight: 3.0
+    gripper_transition_radius: 2
+    gripper_open_prior: 0.716
+    joint_dimension_weights: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+    enable_camera_consistency: true
+
+  lora:
+    rank: 16
+    alpha: 32.0
+    dropout: 0.05
+    vision_last_n_blocks: 2
+    train_multimodal_projector: true
+    train_action_projections: true
+    train_camera_slot_embeddings: true
+
+optimizer:
+  lr: 1e-4
+
+scheduler:
+  num_warmup_steps: 200
+  num_training_steps: 3000

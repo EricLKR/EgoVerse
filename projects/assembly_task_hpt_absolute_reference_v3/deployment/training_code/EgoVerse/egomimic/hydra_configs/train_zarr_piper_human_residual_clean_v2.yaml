@@ -1,0 +1,36 @@
+defaults:
+  - model: hpt_cotrain_piper_human_residual_clean_v2
+  - paths: default
+  - trainer: ddp
+  - debug: null
+  - logger: wandb
+  - data: piper_human_cotrain_aria0919_residual_clean_v2
+  - callbacks: checkpoints
+  - evaluator: eval_hpt_piper_human_residual_clean_v2
+  - override hydra/launcher: submitit
+  - _self_
+
+name: piper_human_residual_clean_v2
+description: mixed_from_scratch_separate_pose_and_joint_norms
+ckpt_path: null
+init_weights_path: null
+init_weights_strict: true
+mode: train
+
+hydra:
+  run:
+    dir: ./logs/${name}/${description}_${now:%Y-%m-%d_%H-%M-%S}
+  sweep:
+    dir: ./logs/${name}/${description}_${now:%Y-%m-%d_%H-%M-%S}
+
+launch_params:
+  gpus_per_node: 1
+  nodes: 1
+seed: 42
+norm_stats:
+  norm_mode: quantile
+  sample_frac: 1.0
+  num_workers: 4
+  save_cache_dir: ${hydra:runtime.output_dir}
+  precomputed_norm_path: null
+reject_outliers: true

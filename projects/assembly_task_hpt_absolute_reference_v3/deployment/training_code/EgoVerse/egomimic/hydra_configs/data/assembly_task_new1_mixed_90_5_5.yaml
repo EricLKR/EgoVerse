@@ -1,0 +1,96 @@
+_target_: egomimic.pl_utils.pl_data_utils.MultiDataModuleWrapper
+
+train_datasets:
+  piper_left_arm:
+    _target_: egomimic.rldb.zarr.zarr_dataset_multi.MultiDataset._from_resolver
+    resolver:
+      _target_: egomimic.rldb.zarr.zarr_dataset_multi.LocalEpisodeResolver
+      folder_path: ${oc.env:PIPER_HPC}/data/piper_assembly_new1_3cam_90_5_5_zarr
+      key_map:
+        _target_: egomimic.rldb.embodiment.piper_human_joint_three_camera.PiperHumanJointThreeCamera.get_keymap
+        keymap_mode: joint_cartesian_camframe
+      transform_list:
+        _target_: egomimic.rldb.embodiment.piper_human_joint_three_camera.PiperHumanJointThreeCamera.get_transform_list
+        mode: joint_cartesian_camframe
+        stride: 1
+    filters:
+      _target_: egomimic.rldb.filters.DatasetFilter
+      filter_lambdas:
+        - "lambda row: row.get('dataset_split') == 'train'"
+    mode: total
+    reject_outliers: false
+    error_on_nan_inf: true
+  human_right_arm:
+    _target_: egomimic.rldb.zarr.zarr_dataset_multi.MultiDataset._from_resolver
+    resolver:
+      _target_: egomimic.rldb.zarr.zarr_dataset_multi.LocalEpisodeResolver
+      folder_path: ${oc.env:PIPER_HPC}/data/aria_assembly_new1_right_54_3_3_zarr
+      key_map:
+        _target_: egomimic.rldb.embodiment.human_single_arm.get_keymap
+        keymap_mode: cartesian_camframe
+        has_head_pose: true
+        arm: right
+      transform_list:
+        _target_: egomimic.rldb.embodiment.human_single_arm.get_transform_list
+        mode: cartesian_camframe
+        stride: 1
+        arm: right
+        actions_key: actions_cartesian_pose
+    filters:
+      _target_: egomimic.rldb.filters.DatasetFilter
+      filter_lambdas:
+        - "lambda row: row.get('dataset_split') == 'train'"
+    mode: total
+    reject_outliers: false
+    error_on_nan_inf: true
+
+valid_datasets:
+  piper_left_arm:
+    _target_: egomimic.rldb.zarr.zarr_dataset_multi.MultiDataset._from_resolver
+    resolver:
+      _target_: egomimic.rldb.zarr.zarr_dataset_multi.LocalEpisodeResolver
+      folder_path: ${oc.env:PIPER_HPC}/data/piper_assembly_new1_3cam_90_5_5_zarr
+      key_map:
+        _target_: egomimic.rldb.embodiment.piper_human_joint_three_camera.PiperHumanJointThreeCamera.get_keymap
+        keymap_mode: joint_cartesian_camframe
+      transform_list:
+        _target_: egomimic.rldb.embodiment.piper_human_joint_three_camera.PiperHumanJointThreeCamera.get_transform_list
+        mode: joint_cartesian_camframe
+        stride: 1
+    filters:
+      _target_: egomimic.rldb.filters.DatasetFilter
+      filter_lambdas:
+        - "lambda row: row.get('dataset_split') == 'valid'"
+    mode: total
+    reject_outliers: false
+    error_on_nan_inf: true
+  human_right_arm:
+    _target_: egomimic.rldb.zarr.zarr_dataset_multi.MultiDataset._from_resolver
+    resolver:
+      _target_: egomimic.rldb.zarr.zarr_dataset_multi.LocalEpisodeResolver
+      folder_path: ${oc.env:PIPER_HPC}/data/aria_assembly_new1_right_54_3_3_zarr
+      key_map:
+        _target_: egomimic.rldb.embodiment.human_single_arm.get_keymap
+        keymap_mode: cartesian_camframe
+        has_head_pose: true
+        arm: right
+      transform_list:
+        _target_: egomimic.rldb.embodiment.human_single_arm.get_transform_list
+        mode: cartesian_camframe
+        stride: 1
+        arm: right
+        actions_key: actions_cartesian_pose
+    filters:
+      _target_: egomimic.rldb.filters.DatasetFilter
+      filter_lambdas:
+        - "lambda row: row.get('dataset_split') == 'valid'"
+    mode: total
+    reject_outliers: false
+    error_on_nan_inf: true
+
+train_dataloader_params:
+  piper_left_arm: {batch_size: 8, num_workers: 4}
+  human_right_arm: {batch_size: 8, num_workers: 4}
+valid_dataloader_params:
+  piper_left_arm: {batch_size: 8, num_workers: 4}
+  human_right_arm: {batch_size: 8, num_workers: 4}

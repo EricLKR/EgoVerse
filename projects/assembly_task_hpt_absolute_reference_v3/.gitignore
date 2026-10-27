@@ -1,0 +1,14 @@
+deployment/checkpoints/
+deployment/logs/
+deployment/validation/
+deployment/replay/
+deployment/offline_samples/
+**/__pycache__/
+**/*.pyc
+**/.pytest_cache/
+**/core
+**/core.*
+**/*.ckpt
+**/*.zarr/
+**/*.npz
+

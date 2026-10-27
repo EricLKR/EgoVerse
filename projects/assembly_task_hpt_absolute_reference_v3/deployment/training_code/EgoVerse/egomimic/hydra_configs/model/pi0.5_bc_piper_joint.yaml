@@ -1,0 +1,35 @@
+defaults:
+  - pi0.5_base
+  - _self_
+
+robomimic_model:
+  camera_transforms: {}
+  domains: [piper_left_arm]
+  ac_keys:
+    piper_left_arm: actions_joints
+
+  action_converters:
+    rules:
+      PIPER_LEFT_ARM:
+        _target_: egomimic.utils.action_utils.PiperJointActionConverter
+        gripper_weight: 3.0
+    fallback:
+      _target_: egomimic.utils.action_utils.BaseActionConverter
+
+  # Map EgoMimic's canonical cameras into OpenPI's fixed ordered slots.
+  camera_slot_maps:
+    piper_left_arm:
+      base_0_rgb: front_img_1
+      left_wrist_0_rgb: wrist_img
+      right_wrist_0_rgb: null
+
+  default_prompt: "Pick up the teddy bear and place it in the basket."
+  control_mode:
+    piper: "six absolute PIPER joint angles in radians and one binary gripper command"
+  proprio_keys_for_prompt:
+    piper_left_arm: [observations.state.joints]
+  gradient_checkpointing: true
+  # Small single-task datasets should adapt the action pathway without
+  # rewriting the 3.3B-parameter pretrained vision/language backbone.
+  finetune_mode: action_expert
+  train_multimodal_projector: true

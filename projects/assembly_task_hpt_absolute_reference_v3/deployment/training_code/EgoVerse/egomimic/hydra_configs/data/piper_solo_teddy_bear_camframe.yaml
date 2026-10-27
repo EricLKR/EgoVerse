@@ -1,0 +1,58 @@
+_target_: egomimic.pl_utils.pl_data_utils.MultiDataModuleWrapper
+
+# Sanity-check run: Piper alone (no cotraining), same data/split as
+# piper_solo_teddy_bear.yaml, but using the newly-calibrated
+# `cartesian_camframe` mode (Piper.EXTRINSICS, see piper.py's class
+# docstring for calibration provenance) instead of `cartesian_base`.
+# Camera-frame vs base_link is a rigid coordinate transform of the same
+# information -- expected to land at roughly the SAME loss as the
+# cartesian_base solo run (~0.117), not better. The point of this run is to
+# confirm the camframe pipeline works end-to-end on a real training run
+# (not just the isolated checks already done) before using it for the real
+# cotrain-with-Human run, which is where camframe actually matters (it's
+# the paper's canonical shared representation for cross-embodiment
+# cotraining -- see hpt_cotrain_piper_human.yaml).
+train_datasets:
+  piper_left_arm:
+    _target_: egomimic.rldb.zarr.zarr_dataset_multi.MultiDataset._from_resolver
+    resolver:
+      _target_: egomimic.rldb.zarr.zarr_dataset_multi.LocalEpisodeResolver
+      folder_path: /mnt/wd10/tongxi/egoverse_piper/EgoVerse/data/piper_zarr_teddy_bear
+      key_map:
+        _target_: egomimic.rldb.embodiment.piper.Piper.get_keymap
+        keymap_mode: cartesian_base
+      transform_list:
+        _target_: egomimic.rldb.embodiment.piper.Piper.get_transform_list
+        mode: cartesian_camframe
+    filters:
+      _target_: egomimic.rldb.filters.DatasetFilter
+      filter_lambdas:
+        - "lambda row: int(row['episode_hash'].rsplit('ep', 1)[-1]) < 24"
+    mode: total
+
+valid_datasets:
+  piper_left_arm:
+    _target_: egomimic.rldb.zarr.zarr_dataset_multi.MultiDataset._from_resolver
+    resolver:
+      _target_: egomimic.rldb.zarr.zarr_dataset_multi.LocalEpisodeResolver
+      folder_path: /mnt/wd10/tongxi/egoverse_piper/EgoVerse/data/piper_zarr_teddy_bear
+      key_map:
+        _target_: egomimic.rldb.embodiment.piper.Piper.get_keymap
+        keymap_mode: cartesian_base
+      transform_list:
+        _target_: egomimic.rldb.embodiment.piper.Piper.get_transform_list
+        mode: cartesian_camframe
+    filters:
+      _target_: egomimic.rldb.filters.DatasetFilter
+      filter_lambdas:
+        - "lambda row: int(row['episode_hash'].rsplit('ep', 1)[-1]) >= 24"
+    mode: total
+
+train_dataloader_params:
+  piper_left_arm:
+    batch_size: 8
+    num_workers: 4
+valid_dataloader_params:
+  piper_left_arm:
+    batch_size: 8
+    num_workers: 4

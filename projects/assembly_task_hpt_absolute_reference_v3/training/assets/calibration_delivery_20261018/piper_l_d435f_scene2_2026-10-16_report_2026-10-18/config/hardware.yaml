@@ -1,0 +1,25 @@
+# 工程硬件元数据；不是直接传入节点的 ROS 参数文件。
+# 仅写入用户确认的信息，启动参数见 launch/。
+camera:
+  model: D435f
+  serial_no: "337322071261"
+  color:
+    width: 640
+    height: 480
+    fps: 30
+  intrinsics_source: factory
+robot:
+  model_reported: AgileX Piper L
+  role: follower
+  can_interface: can_follower
+  firmware_version: "S-V1.9-0"
+  base_frame: base_link
+  flange_frame: link6
+tag:
+  family: 36h11
+  id: 0
+  size_m: 0.042
+  mounting: rigidly_attached_to_follower_gripper
+setup:
+  calibration_type: eye_on_base
+  camera_fixed_relative_to_base_confirmed: true

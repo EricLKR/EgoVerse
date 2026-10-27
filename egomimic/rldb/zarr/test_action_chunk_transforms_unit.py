@@ -6,6 +6,7 @@ from egomimic.rldb.zarr.action_chunk_transforms import (
     ActionChunkCoordinateFrameTransform,
     ConcatKeys,
     InterpolatePose,
+    InterpolateStep,
     XYZWXYZ_to_XYZYPR,
     build_human_bimanual_transform_list,
     build_eva_bimanual_transform_list,
@@ -212,6 +213,32 @@ def test_interpolate_pose_quat_wxyz_invalid_shape_raises() -> None:
     batch = {"actions": np.zeros((2, 6), dtype=np.float64)}
     with pytest.raises(ValueError, match=r"InterpolatePose expects \(T, 7\)"):
         transform.transform(batch)
+
+
+def test_interpolate_step_preserves_binary_values_and_endpoints() -> None:
+    transform = InterpolateStep(
+        new_chunk_length=7,
+        action_key="gripper",
+        output_action_key="gripper_out",
+    )
+    source = np.array([[0.0], [0.0], [1.0], [1.0]], dtype=np.float32)
+
+    output = np.asarray(transform.transform({"gripper": source})["gripper_out"])
+
+    assert output.shape == (7, 1)
+    assert set(np.unique(output).tolist()) == {0.0, 1.0}
+    np.testing.assert_array_equal(output[0], source[0])
+    np.testing.assert_array_equal(output[-1], source[-1])
+
+
+def test_interpolate_step_rejects_non_matrix_input() -> None:
+    transform = InterpolateStep(
+        new_chunk_length=4,
+        action_key="gripper",
+        output_action_key="gripper_out",
+    )
+    with pytest.raises(ValueError, match=r"InterpolateStep expects \(T, D\)"):
+        transform.transform({"gripper": np.array([0.0, 1.0])})
 
 
 def test_xyzwxyz_to_xyzypr_single_pose_conversion() -> None:

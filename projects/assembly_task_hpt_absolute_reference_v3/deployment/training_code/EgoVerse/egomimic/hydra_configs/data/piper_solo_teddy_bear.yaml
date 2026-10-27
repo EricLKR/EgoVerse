@@ -1,0 +1,52 @@
+_target_: egomimic.pl_utils.pl_data_utils.MultiDataModuleWrapper
+
+# Diagnostic run: Piper alone, no human cotraining -- same data/split as
+# piper_human_cotrain.yaml's piper_left_arm half, to isolate whether HPT's
+# underperformance (vs. the ACT baseline) traces to the human-cotraining
+# coordinate-frame mismatch (Piper base_link frame vs. Human head frame --
+# see hpt_cotrain_piper_human.yaml) or to something else (architecture,
+# deployment). Pair with model=hpt_bc_piper_solo.
+train_datasets:
+  piper_left_arm:
+    _target_: egomimic.rldb.zarr.zarr_dataset_multi.MultiDataset._from_resolver
+    resolver:
+      _target_: egomimic.rldb.zarr.zarr_dataset_multi.LocalEpisodeResolver
+      folder_path: /mnt/wd10/tongxi/egoverse_piper/EgoVerse/data/piper_zarr_teddy_bear
+      key_map:
+        _target_: egomimic.rldb.embodiment.piper.Piper.get_keymap
+        keymap_mode: cartesian_base
+      transform_list:
+        _target_: egomimic.rldb.embodiment.piper.Piper.get_transform_list
+        mode: cartesian_base
+    filters:
+      _target_: egomimic.rldb.filters.DatasetFilter
+      filter_lambdas:
+        - "lambda row: int(row['episode_hash'].rsplit('ep', 1)[-1]) < 24"
+    mode: total
+
+valid_datasets:
+  piper_left_arm:
+    _target_: egomimic.rldb.zarr.zarr_dataset_multi.MultiDataset._from_resolver
+    resolver:
+      _target_: egomimic.rldb.zarr.zarr_dataset_multi.LocalEpisodeResolver
+      folder_path: /mnt/wd10/tongxi/egoverse_piper/EgoVerse/data/piper_zarr_teddy_bear
+      key_map:
+        _target_: egomimic.rldb.embodiment.piper.Piper.get_keymap
+        keymap_mode: cartesian_base
+      transform_list:
+        _target_: egomimic.rldb.embodiment.piper.Piper.get_transform_list
+        mode: cartesian_base
+    filters:
+      _target_: egomimic.rldb.filters.DatasetFilter
+      filter_lambdas:
+        - "lambda row: int(row['episode_hash'].rsplit('ep', 1)[-1]) >= 24"
+    mode: total
+
+train_dataloader_params:
+  piper_left_arm:
+    batch_size: 8
+    num_workers: 4
+valid_dataloader_params:
+  piper_left_arm:
+    batch_size: 8
+    num_workers: 4

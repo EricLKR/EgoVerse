@@ -1,0 +1,11 @@
+defaults:
+  - train_zarr_cartesian
+  - override model: pi0.5_egoverse_multihead_v2
+  - override data: piper_human_pi05_multihead_v2
+  - override trainer: ddp_pi
+  - override evaluator: eval_pi05_multihead_v2
+  - override hydra/launcher: submitit_pace
+  - _self_
+
+name: pi05_egoverse_multihead_v2
+description: shared_pose_plus_piper_joint_head_single_frame_smoke_first

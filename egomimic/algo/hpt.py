@@ -1,6 +1,7 @@
 import os
 import random
 from collections import OrderedDict
+from collections.abc import Mapping
 from functools import partial
 from typing import Literal
 
@@ -111,6 +112,7 @@ class HPTModel(nn.Module):
         self.shared_keys = []
 
         self.auxiliary_ac_keys = None
+        self.loss_weights = {}
         self.shared_action = False
         self.device = None
 
@@ -600,22 +602,46 @@ class HPTModel(nn.Module):
         auxiliary_action_loss = torch.tensor(0.0, device=self.device)
 
         if domain in self.heads:
-            action_loss += self.heads[domain].compute_loss(features, data)
+            action_loss += self._head_loss_weight(domain, "domain") * self.heads[
+                domain
+            ].compute_loss(features, data)
 
         if self.shared_action:
-            shared_action_loss += self.heads["shared"].compute_loss(features, data)
+            shared_action_loss += self._head_loss_weight(
+                domain, "shared"
+            ) * self.heads["shared"].compute_loss(features, data)
 
         if domain in self.auxiliary_ac_keys:
-            for key in self.auxiliary_ac_keys[domain]:
-                if f"{domain}_{key}" in self.heads:
-                    data["action"] = data[key]
-                    auxiliary_action_loss += self.heads[f"{domain}_{key}"].compute_loss(
-                        features, data
-                    )
+            original_action = data.get("action")
+            try:
+                for key in self.auxiliary_ac_keys[domain]:
+                    if f"{domain}_{key}" in self.heads:
+                        data["action"] = data[key]
+                        auxiliary_action_loss += self._head_loss_weight(
+                            domain, key
+                        ) * self.heads[f"{domain}_{key}"].compute_loss(features, data)
+            finally:
+                if original_action is not None:
+                    data["action"] = original_action
 
         total_loss = action_loss + shared_action_loss + auxiliary_action_loss
 
         return total_loss
+
+    def _head_loss_weight(self, domain: str, head_name: str) -> float:
+        """Return a per-domain/per-head scalar while preserving 1.0 defaults."""
+        domain_weights = self.loss_weights.get(domain, {})
+        if not isinstance(domain_weights, Mapping):
+            raise TypeError(
+                f"loss_weights[{domain!r}] must be a mapping, got "
+                f"{type(domain_weights).__name__}"
+            )
+        weight = float(domain_weights.get(head_name, 1.0))
+        if weight < 0:
+            raise ValueError(
+                f"loss weight for domain={domain!r}, head={head_name!r} must be non-negative"
+            )
+        return weight
 
     def compute_loss(self, batch):
         """
@@ -641,18 +667,27 @@ class HPTModel(nn.Module):
         shared_action_loss = torch.tensor(0.0, device=self.device)
         auxiliary_action_loss = torch.tensor(0.0, device=self.device)
         if domain in self.heads:
-            action_loss += self.heads[domain].compute_loss(features, data)
+            action_loss += self._head_loss_weight(domain, "domain") * self.heads[
+                domain
+            ].compute_loss(features, data)
 
         if self.shared_action:
-            shared_action_loss = self.heads["shared"].compute_loss(features, data)
+            shared_action_loss = self._head_loss_weight(
+                domain, "shared"
+            ) * self.heads["shared"].compute_loss(features, data)
 
         if domain in self.auxiliary_ac_keys:
-            for key in self.auxiliary_ac_keys[domain]:
-                if f"{domain}_{key}" in self.heads:
-                    data["action"] = data[key]
-                    auxiliary_action_loss += self.heads[f"{domain}_{key}"].compute_loss(
-                        features, data
-                    )
+            original_action = data.get("action")
+            try:
+                for key in self.auxiliary_ac_keys[domain]:
+                    if f"{domain}_{key}" in self.heads:
+                        data["action"] = data[key]
+                        auxiliary_action_loss += self._head_loss_weight(
+                            domain, key
+                        ) * self.heads[f"{domain}_{key}"].compute_loss(features, data)
+            finally:
+                if original_action is not None:
+                    data["action"] = original_action
 
         total_loss = action_loss + shared_action_loss + auxiliary_action_loss
         return total_loss
@@ -852,6 +887,7 @@ class HPT(Algo):
 
         model = HPTModel(**trunk)
         model.auxiliary_ac_keys = self.auxiliary_ac_keys
+        model.loss_weights = kwargs.get("loss_weights", {})
 
         self.multitask = kwargs.get("multitask", False)
         self.device = kwargs.get(
@@ -1031,6 +1067,38 @@ class HPT(Algo):
 
         return processed_batch
 
+    def _current_head_loss_components(self, embodiment_name: str):
+        """Collect diagnostics from every specialized head used by a domain.
+
+        The Piper-only model keeps ``JointFMPolicy`` under ``shared`` while the
+        human-cotrained model keeps it under the robot auxiliary action head.
+        Supporting both locations preserves old checkpoint logging and makes
+        the mixed model expose the same component names.
+        """
+        policy = self.nets["policy"]
+        candidates = []
+        if self.shared_ac_key is not None:
+            candidates.append("shared")
+        candidates.append(embodiment_name)
+        candidates.extend(
+            f"{embodiment_name}_{key}"
+            for key in self.auxiliary_ac_keys.get(embodiment_name, [])
+        )
+        components = {}
+        for head_name in candidates:
+            if head_name not in policy.heads:
+                continue
+            for name, value in getattr(
+                policy.heads[head_name], "last_loss_components", {}
+            ).items():
+                if name in components:
+                    raise RuntimeError(
+                        f"duplicate loss component {name!r} from multiple heads for "
+                        f"domain {embodiment_name!r}"
+                    )
+                components[name] = value
+        return components
+
     @override
     def forward_training(self, batch):
         """
@@ -1073,6 +1141,10 @@ class HPT(Algo):
 
             predictions[f"{embodiment_name}_{ac_key}"] = _batch[ac_key]
             predictions[f"{embodiment_name}_loss"] = loss
+            for component_name, component_value in self._current_head_loss_components(
+                embodiment_name
+            ).items():
+                predictions[f"{embodiment_name}_{component_name}"] = component_value
 
         if self.ot:
             ot_loss, avg_feat_distance = self._forward_ot(
@@ -1126,6 +1198,10 @@ class HPT(Algo):
             else:
                 val_loss = self.nets["policy"].compute_loss(hpt_batch)
             unnorm_preds[f"{embodiment_name}_loss"] = val_loss
+            for component_name, component_value in self._current_head_loss_components(
+                embodiment_name
+            ).items():
+                unnorm_preds[f"{embodiment_name}_{component_name}"] = component_value
 
             actions = self.nets["policy"].forward(hpt_batch["domain"], forward_data)
             predictions = OrderedDict()
@@ -1181,6 +1257,17 @@ class HPT(Algo):
             scaled_bc_loss = bc_weight * bc_loss
             total_action_loss += scaled_bc_loss
             loss_dict[f"{embodiment_name}_loss"] = bc_loss  # for logging
+            for component_name in (
+                "joint_flow_loss",
+                "joint_position_loss",
+                "gripper_bce",
+                "joint_delta_loss",
+                "joint_acceleration_loss",
+                "joint_total_loss",
+            ):
+                prediction_key = f"{embodiment_name}_{component_name}"
+                if prediction_key in predictions:
+                    loss_dict[prediction_key] = predictions[prediction_key]
 
         if self.ot:
             loss_dict["ot_loss"] = predictions["ot_loss"]
@@ -1265,6 +1352,30 @@ class HPT(Algo):
             data["action"] = batch[self.shared_ac_key]
         else:
             data["action"] = batch[ac_key]
+
+        # Physical-space auxiliary losses (for example SO(3) geodesic loss)
+        # need to undo the dataset normalization.  Keep the metadata next to
+        # the already-normalized action so policy heads can do this without
+        # reaching back into the dataset object.
+        embodiment_id = int(batch["embodiment"].reshape(-1)[0].item())
+        action_key = self.shared_ac_key or ac_key
+        action_stats = self.norm_stats.norm_stats.get(embodiment_id, {}).get(
+            action_key
+        )
+        if action_stats is not None:
+            mode = self.norm_stats.norm_mode
+            required = {
+                "quantile": ("quantile_1", "quantile_99"),
+                "minmax": ("min", "max"),
+                "zscore": ("mean", "std"),
+            }.get(mode, ())
+            data["_action_norm_mode"] = mode
+            for stat_name in required:
+                data[f"_action_norm_{stat_name}"] = torch.as_tensor(
+                    action_stats[stat_name],
+                    device=data["action"].device,
+                    dtype=data["action"].dtype,
+                )
         return data
 
     def _clone_batch(self, batch):

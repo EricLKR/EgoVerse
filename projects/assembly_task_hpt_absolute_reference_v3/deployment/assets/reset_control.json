@@ -1,0 +1,103 @@
+{
+  "initial_pose": {
+    "follower_joint_positions_deg": [
+      6.46,
+      42.912,
+      -27.554,
+      -11.212,
+      41.809,
+      7.905
+    ],
+    "follower_gripper_opening_mm": 99.7,
+    "leader_joint_positions_deg": [
+      6.460000000000008,
+      42.49264181523501,
+      -28.75314015375517,
+      -11.510943396226438,
+      40.529281991893455,
+      7.8392814726840925
+    ],
+    "leader_gripper_opening_mm": 101.73667315175099,
+    "follower_joint_limits_deg": [
+      [
+        -151.0,
+        151.0
+      ],
+      [
+        0.9,
+        186.0
+      ],
+      [
+        -170.1,
+        -1.0
+      ],
+      [
+        -124.2,
+        124.9
+      ],
+      [
+        -85.0,
+        87.7
+      ],
+      [
+        -168.4,
+        168.4
+      ]
+    ],
+    "leader_joint_limits_deg": [
+      [
+        -151.0,
+        151.0
+      ],
+      [
+        3.0,
+        177.0
+      ],
+      [
+        -167.0,
+        -3.0
+      ],
+      [
+        -124.0,
+        124.0
+      ],
+      [
+        -86.5,
+        86.5
+      ],
+      [
+        -167.0,
+        167.0
+      ]
+    ],
+    "mirror_sign": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "leader_gripper_friction": 10,
+    "control_policy": "leader_endpoint_clamp_verified_friction_bounded_recovery_v7"
+  },
+  "homing": {
+    "timeout_s": 45.0,
+    "speed_percent": 30,
+    "velocity_deg_s": 20.0,
+    "acceleration_deg_s2": 40.0,
+    "gripper_velocity_mm_s": 30.0,
+    "handoff_velocity_deg_s": 60.0,
+    "handoff_gripper_velocity_mm_s": 60.0,
+    "joint_tolerance_deg": 1.5,
+    "gripper_tolerance_mm": 3.0,
+    "feedback_max_age_s": 0.5,
+    "teaching_endpoint_margin_deg": 5.0,
+    "leader_gripper_friction": 10,
+    "teaching_recovery_timeout_s": 2.0,
+    "max_teaching_recoveries": 3,
+    "start_limit_margin_deg": 10.0
+  },
+  "hold_s": 0.5,
+  "gripper_policy": "hold_during_joint_return_then_restore"
+}

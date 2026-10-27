@@ -1,0 +1,18 @@
+{
+  "schema": "assembly_new1_joint_zero_offset_v1",
+  "status": "inactive",
+  "hardware_minus_model_joint_offset_deg": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "multi_pose_validation": {
+    "required": true,
+    "passed": false,
+    "pose_count": 0,
+    "note": "A single visual Home alignment is insufficient to activate a full-trajectory mapping."
+  }
+}

@@ -1,0 +1,19 @@
+defaults:
+  - hpt_cotrain_piper_human_residual_clean_v2_assembly_new1_3cam
+  - _self_
+
+robomimic_model:
+  _target_: egomimic.algo.hpt_absolute_reference_v3.HPTAbsoluteReferenceV3
+  recovery_noise_std_deg: [1.5, 1.5, 1.5, 1.5, 1.5, 2.0]
+  recovery_noise_clip_deg: [4.0, 4.0, 4.0, 4.0, 4.0, 5.0]
+  head_specs:
+    piper_left_arm_actions_joints:
+      _target_: egomimic.models.absolute_reference_joint_policy_v3.AbsoluteReferenceJointPolicyV3
+      # q1/q99 midpoint, expanded per-joint to cover every train label plus 2 deg.
+      joint_reference_center_deg: [22.8050, 83.5205, -55.8420, -14.6397, 25.1686, 27.9814]
+      joint_reference_range_deg: [39.2300, 57.4300, 66.9400, 47.8200, 71.0100, 38.9400]
+      joint_correction_scale_deg: [4.0, 5.0, 5.0, 4.0, 5.0, 4.0]
+      reference_position_loss_weight: 0.50
+      correction_regularization_weight: 0.02
+      recovery_loss_weight: 0.50
+      replan_consistency_loss_weight: 0.25

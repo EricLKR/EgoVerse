@@ -1,0 +1,85 @@
+defaults:
+  - pi0.5_base
+  - _self_
+
+robomimic_model:
+  _target_: egomimic.algo.pi_egoverse_multihead_v2.PIEgoVerseMultiHeadV2
+  camera_transforms: {}
+  domains: [piper_left_arm, human_left_arm]
+  observation_history: 1
+  auxiliary_joint_key: actions_joints
+  piper_embodiment: piper_left_arm
+  shared_pose_loss_weight: 1.0
+  piper_joint_loss_weight: 1.0
+
+  # Both embodiments now supervise exactly the same semantic 9-D camera-frame
+  # pose channels.  PIPER joints never enter this 32-D flow layout.
+  ac_keys:
+    piper_left_arm: actions_cartesian_pose
+    human_left_arm: actions_cartesian_pose
+  action_converters:
+    rules:
+      PIPER_LEFT_ARM:
+        _target_: egomimic.utils.action_utils.HumanLeftXYZ6DActionConverter
+      HUMAN_LEFT_ARM:
+        _target_: egomimic.utils.action_utils.HumanLeftXYZ6DActionConverter
+    fallback:
+      _target_: egomimic.utils.action_utils.BaseActionConverter
+
+  camera_slot_maps:
+    piper_left_arm:
+      base_0_rgb: front_img_1
+      left_wrist_0_rgb: wrist_img
+      right_wrist_0_rgb: null
+    human_left_arm:
+      base_0_rgb: front_img_1
+      left_wrist_0_rgb: null
+      right_wrist_0_rgb: null
+
+  default_prompt: "Pick up the teddy bear and place it in the basket."
+  tokenizer_max_length: 128
+  control_mode:
+    piper: "shared camera-frame hand pose plus PIPER residual joint control"
+    human: "shared left-hand camera-frame xyz and continuous 6D rotation"
+  proprio_keys_for_prompt:
+    piper_left_arm: [observations.state.joints]
+    human_left_arm: [observations.state.ee_pose]
+  gradient_checkpointing: true
+  finetune_mode: action_expert
+  train_multimodal_projector: true
+
+  joint_head:
+    prefix_dim: 2048
+    state_dim: 7
+    hidden_dim: 256
+    action_horizon: 100
+    control_horizon: 30
+    num_layers: 3
+    num_heads: 4
+    dropout: 0.1
+    max_residual_deg: 90.0
+    joint_error_scale_deg: 5.0
+    joint_position_loss_weight: 1.0
+    joint_delta_loss_weight: 0.25
+    joint_acceleration_loss_weight: 0.10
+    joint_jerk_loss_weight: 0.02
+    fk_position_loss_weight: 0.10
+    fk_rotation_loss_weight: 0.05
+    camera_position_loss_weight: 0.10
+    camera_rotation_loss_weight: 0.05
+    fk_position_error_scale_m: 0.02
+    rotation_error_scale_deg: 10.0
+    gripper_loss_weight: 1.5
+    gripper_closed_weight: 1.76
+    gripper_open_weight: 0.70
+    gripper_transition_weight: 3.0
+    gripper_transition_radius: 2
+    gripper_open_prior: 0.716
+    joint_dimension_weights: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+
+optimizer:
+  lr: 3e-5
+
+scheduler:
+  num_warmup_steps: 1000
+  num_training_steps: 30000

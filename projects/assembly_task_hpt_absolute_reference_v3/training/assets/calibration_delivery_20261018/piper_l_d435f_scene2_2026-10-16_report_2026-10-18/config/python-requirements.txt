@@ -1,0 +1,9 @@
+# Python 3.12 依赖；ROS Python 模块通过 system-site-packages 继承。
+numpy==1.26.4
+scipy==1.11.4
+transforms3d==0.4.2
+piper_sdk==0.6.2
+python-can==4.6.1
+packaging==26.3
+typing_extensions==4.14.0
+wrapt==1.16.0

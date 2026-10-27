@@ -1,0 +1,11 @@
+defaults:
+  - train_zarr_cartesian
+  - override model: pi0.5_piper_expert_action_v3_lora
+  - override data: piper_solo_teddy_0912_expert_action_v3
+  - override trainer: ddp_pi
+  - override evaluator: eval_pi05_expert_action_v3
+  - override hydra/launcher: submitit_pace
+  - _self_
+
+name: pi05_piper_expert_action_v3_lora
+description: piper_only_lora_rank16_native30

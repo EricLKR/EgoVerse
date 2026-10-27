@@ -1,0 +1,8 @@
+{
+  "accepted": true,
+  "accepted_at": "2026-10-18T03:00:47+02:00",
+  "accepted_by": "Kerun Liu",
+  "extrinsics_sha256": "29077fa170eb2f331b8beb8fb3c2eff61533f14ac3e0e8b7a1640f4703ffda7c",
+  "mode": "user_manual_acceptance_with_quantitative_held_out_reprojection",
+  "note": "User previously reported the held-out test had no observed problem and explicitly chose manual acceptance. The 2026-10-18 delivery confirms the dataset-embedded candidate matrix byte-for-byte and shows lower reprojection error on 5/5 held-out poses. This authorizes training but is not a claim of millimetre-level absolute accuracy; the worst held-out pose remains 27.348 px RMS."
+}

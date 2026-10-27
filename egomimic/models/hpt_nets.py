@@ -1,3 +1,4 @@
+import os
 from functools import partial
 from typing import Callable, List, Optional, Union
 
@@ -592,6 +593,7 @@ class ResNet(PolicyStem):
         resnet_model: str = "resnet18",
         num_of_copy: int = 1,
         freeze_backbone: bool = False,
+        normalize_input: bool = False,
         **kwargs,
     ) -> None:
         """ResNet Encoder for Images"""
@@ -614,6 +616,17 @@ class ResNet(PolicyStem):
         self.to_tensor = transforms.ToTensor()
         self.proj = nn.Linear(512, output_dim)
         self.avgpool = nn.AvgPool2d(7, stride=1)
+        self.normalize_input = bool(normalize_input)
+        self.register_buffer(
+            "image_mean",
+            torch.tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1),
+            persistent=False,
+        )
+        self.register_buffer(
+            "image_std",
+            torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1),
+            persistent=False,
+        )
 
         # Freeze the backbone if specified
         if freeze_backbone:
@@ -640,6 +653,8 @@ class ResNet(PolicyStem):
         """
         B, *_, H, W = x.shape
         x = x.view(len(x), -1, 3, H, W)
+        if self.normalize_input:
+            x = (x - self.image_mean.to(x)) / self.image_std.to(x)
         if self.num_of_copy > 1:
             # separate encoding for each view
             out = []
@@ -656,6 +671,118 @@ class ResNet(PolicyStem):
         feat = feat.view(B, feat.shape[1], -1).transpose(1, 2)
         feat = self.proj(feat)
         return feat
+
+
+_DINOV3_ENCODER_CACHE: dict[tuple[str, str], nn.Module] = {}
+
+
+class FrozenDINOv3Encoder(nn.Module):
+    """Run a frozen Hugging Face DINOv3 ViT encoder inside HPT.
+
+    The encoder consumes raw image tensors in ``[0, 1]`` with shape
+    ``[B, T, N, 3, H, W]`` and returns patch tokens as
+    ``[B, T*N*196, hidden_size]`` for ViT-L/16 at 224x224.
+
+    The large frozen transformer is deliberately kept outside PyTorch's module
+    registry.  It is reloaded from ``model_name`` (or ``DINO_MODEL_PATH``) when
+    a policy is constructed, so Lightning checkpoints contain only the small
+    trainable HPT policy rather than one or two extra copies of the 1.2 GB DINO
+    weights.  Multiple camera wrappers in one process share a single cached
+    encoder instance.
+    """
+
+    def __init__(
+        self,
+        model_name: str,
+        dtype: str = "bfloat16",
+        local_files_only: bool = True,
+        image_size: int = 224,
+        **kwargs,
+    ) -> None:
+        super().__init__()
+        from transformers import AutoModel
+
+        override = os.environ.get("DINO_MODEL_PATH")
+        resolved_name = override if override else model_name
+        self.model_name = str(resolved_name)
+        self.local_files_only = bool(local_files_only)
+        self.image_size = int(image_size)
+        self.compute_dtype = getattr(torch, dtype) if isinstance(dtype, str) else dtype
+        if self.compute_dtype not in (torch.bfloat16, torch.float16, torch.float32):
+            raise ValueError(f"Unsupported DINOv3 dtype: {self.compute_dtype}")
+
+        cache_key = (self.model_name, str(self.compute_dtype))
+        encoder = _DINOV3_ENCODER_CACHE.get(cache_key)
+        if encoder is None:
+            encoder = AutoModel.from_pretrained(
+                self.model_name,
+                dtype=self.compute_dtype,
+                local_files_only=self.local_files_only,
+            )
+            for parameter in encoder.parameters():
+                parameter.requires_grad = False
+            encoder.eval()
+            _DINOV3_ENCODER_CACHE[cache_key] = encoder
+
+        # Bypass nn.Module.__setattr__: the external frozen model must not be
+        # registered, optimized, DDP-wrapped, or serialized into checkpoints.
+        object.__setattr__(self, "_encoder", encoder)
+        cfg = encoder.config
+        self.hidden_size = int(cfg.hidden_size)
+        patch_size = int(cfg.patch_size)
+        if self.image_size % patch_size != 0:
+            raise ValueError(
+                f"image_size={self.image_size} is not divisible by patch_size={patch_size}"
+            )
+        self.num_patches = (self.image_size // patch_size) ** 2
+        self.register_buffer(
+            "image_mean",
+            torch.tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1),
+            persistent=False,
+        )
+        self.register_buffer(
+            "image_std",
+            torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1),
+            persistent=False,
+        )
+
+    def train(self, mode: bool = True):
+        super().train(mode)
+        self._encoder.eval()
+        return self
+
+    def _ensure_encoder_device(self, device: torch.device) -> None:
+        encoder_device = next(self._encoder.parameters()).device
+        if encoder_device != device:
+            self._encoder.to(device)
+        self._encoder.eval()
+
+    @torch.no_grad()
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        if x.ndim < 4 or x.shape[-3] != 3:
+            raise ValueError(
+                "FrozenDINOv3Encoder expects [...,3,H,W], "
+                f"got shape {tuple(x.shape)}"
+            )
+        batch = x.shape[0]
+        height, width = x.shape[-2:]
+        pixels = x.reshape(-1, 3, height, width)
+        if pixels.dtype == torch.uint8:
+            pixels = pixels.float().div_(255.0)
+        else:
+            pixels = pixels.float()
+        pixels = F.interpolate(
+            pixels,
+            size=(self.image_size, self.image_size),
+            mode="bilinear",
+            align_corners=False,
+            antialias=True,
+        )
+        pixels = (pixels - self.image_mean.to(pixels)) / self.image_std.to(pixels)
+        self._ensure_encoder_device(pixels.device)
+        outputs = self._encoder(pixel_values=pixels.to(self.compute_dtype))
+        patches = outputs.last_hidden_state[:, -self.num_patches :]
+        return patches.float().reshape(batch, -1, self.hidden_size)
 
 
 def _qwen_last_token_pool(

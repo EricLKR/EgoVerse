@@ -1,0 +1,276 @@
+{
+  "report_date": "2026-10-18",
+  "calibration_date": "2026-10-16",
+  "files": [
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/calibration/native/head_cam_to_follower_base_20261016_scene2.calib",
+      "bundled_path": "results/original/head_cam_to_follower_base_20261016_scene2.calib",
+      "sha256": "e007e3a065263257889acf0c399a4e3131df963b7ece1e64db1afe095738056c"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/calibration/candidates/head_cam_to_follower_base_scene2_corners_2026-10-16.calib",
+      "bundled_path": "results/corrected/head_cam_to_follower_base_scene2_corners_2026-10-16.calib",
+      "sha256": "83973d7b0ebc82e0fbb4d6112e445d36f3c875d1542aaa93a5a2c3a12b571198"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/calibration/candidates/head_cam_to_follower_base_scene2_corners_2026-10-16.json",
+      "bundled_path": "results/corrected/fit_metadata.json",
+      "sha256": "959323e3644d8443edbdb2abcf658d436d8df9d7356f64d3b0e5e28d678250ae"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/calibration/validation/scene2_corners_2026-10-16_10poses.json",
+      "bundled_path": "data/training/scene2_corners_2026-10-16_10poses.json",
+      "sha256": "b664b27674ab617b4e4ec1e5e59e8d4e6a011fed516e7500a8ac3c0b03bf2a63"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/calibration/validation/scene2_corners_2026-10-16_10poses_01_raw.png",
+      "bundled_path": "data/training/scene2_corners_2026-10-16_10poses_01_raw.png",
+      "sha256": "5f08e4ae8e93ca75d9d2f255f1072c36242c49c6babad31ddf3d52f932b68258"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/calibration/validation/scene2_corners_2026-10-16_10poses_01_comparison.png",
+      "bundled_path": "data/training/scene2_corners_2026-10-16_10poses_01_comparison.png",
+      "sha256": "b177c4abb8581ed1866661a533da5d86bb86cc1f0ffd63c30a0aeaff7835d94c"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/calibration/validation/scene2_corners_2026-10-16_10poses_02_raw.png",
+      "bundled_path": "data/training/scene2_corners_2026-10-16_10poses_02_raw.png",
+      "sha256": "bb959b0f8fefb7d1290208ea55e00a10f66f9cdb85ccfaa861a4c18f00ca9d01"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/calibration/validation/scene2_corners_2026-10-16_10poses_02_comparison.png",
+      "bundled_path": "data/training/scene2_corners_2026-10-16_10poses_02_comparison.png",
+      "sha256": "a8d90646960accb5f3691c49787640bbe4f6e84296d943cd1246f5cc7f73329e"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/calibration/validation/scene2_corners_2026-10-16_10poses_03_raw.png",
+      "bundled_path": "data/training/scene2_corners_2026-10-16_10poses_03_raw.png",
+      "sha256": "a3feb219240be5b13bb192a759ab7545cf56bef8d74579fd2e93750ef1522c28"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/calibration/validation/scene2_corners_2026-10-16_10poses_03_comparison.png",
+      "bundled_path": "data/training/scene2_corners_2026-10-16_10poses_03_comparison.png",
+      "sha256": "c373db11aa2b3ebec1804298ab287072edacc974888411883ffc994aa787dd00"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/calibration/validation/scene2_corners_2026-10-16_10poses_04_raw.png",
+      "bundled_path": "data/training/scene2_corners_2026-10-16_10poses_04_raw.png",
+      "sha256": "62583ad64203c987e337835b6769833cc541f47d9df77d04de8cb8e7d23b6088"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/calibration/validation/scene2_corners_2026-10-16_10poses_04_comparison.png",
+      "bundled_path": "data/training/scene2_corners_2026-10-16_10poses_04_comparison.png",
+      "sha256": "7a76b6f22fdb9aa500ceccc068591fdc007ba14630341165ae1fd76ddf7e58da"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/calibration/validation/scene2_corners_2026-10-16_10poses_05_raw.png",
+      "bundled_path": "data/training/scene2_corners_2026-10-16_10poses_05_raw.png",
+      "sha256": "b9fb0672d0f5b5b504e94dcb28a5d15a77ccc84311d5a6b91bc97f0b16e0df15"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/calibration/validation/scene2_corners_2026-10-16_10poses_05_comparison.png",
+      "bundled_path": "data/training/scene2_corners_2026-10-16_10poses_05_comparison.png",
+      "sha256": "dd52fc468da6dc5793a2f1e75fa3b7cc63be923f576ad8a16d07b263ad25ff41"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/calibration/validation/scene2_corners_2026-10-16_10poses_06_raw.png",
+      "bundled_path": "data/training/scene2_corners_2026-10-16_10poses_06_raw.png",
+      "sha256": "599bbae77b3591c6220054a294365b580411af3583e5f3b30a3d56377e6a1575"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/calibration/validation/scene2_corners_2026-10-16_10poses_06_comparison.png",
+      "bundled_path": "data/training/scene2_corners_2026-10-16_10poses_06_comparison.png",
+      "sha256": "09413006deb0c60cbf80a21026be0c4b2c35f78e72877858cd1068472f37c0d9"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/calibration/validation/scene2_corners_2026-10-16_10poses_07_raw.png",
+      "bundled_path": "data/training/scene2_corners_2026-10-16_10poses_07_raw.png",
+      "sha256": "94f07b89f7c55a5a94c9410c3863a0b8e3c13540abf80b2ea2eb8105ef132391"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/calibration/validation/scene2_corners_2026-10-16_10poses_07_comparison.png",
+      "bundled_path": "data/training/scene2_corners_2026-10-16_10poses_07_comparison.png",
+      "sha256": "8fd1cde2d8b5faeeeb5bce0fd836292c24a23ef7a272bfb42968f8827a9c36bd"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/calibration/validation/scene2_corners_2026-10-16_10poses_08_raw.png",
+      "bundled_path": "data/training/scene2_corners_2026-10-16_10poses_08_raw.png",
+      "sha256": "eaeebdf937c8af344dae1fc03451b2c853c4fe69462255393d7c30a43598fae0"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/calibration/validation/scene2_corners_2026-10-16_10poses_08_comparison.png",
+      "bundled_path": "data/training/scene2_corners_2026-10-16_10poses_08_comparison.png",
+      "sha256": "e9fac5d7c7bf5b60507c8afe182d3cdc17113d4c6af7f24f3b33027fe8168a56"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/calibration/validation/scene2_corners_2026-10-16_10poses_09_raw.png",
+      "bundled_path": "data/training/scene2_corners_2026-10-16_10poses_09_raw.png",
+      "sha256": "478d8f4903530387ac4629984c86a792dbf3b3abce31a1c1bdeed24a42a2f9eb"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/calibration/validation/scene2_corners_2026-10-16_10poses_09_comparison.png",
+      "bundled_path": "data/training/scene2_corners_2026-10-16_10poses_09_comparison.png",
+      "sha256": "32332db18939ae3c0c3da563e47a455dfd3dedf716563963a25ac3f44132a35f"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/calibration/validation/scene2_corners_2026-10-16_10poses_10_raw.png",
+      "bundled_path": "data/training/scene2_corners_2026-10-16_10poses_10_raw.png",
+      "sha256": "792dcb8a4b315366b9c8f780a13647403e7b6017a8c04299ad77bd7a4bb98452"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/calibration/validation/scene2_corners_2026-10-16_10poses_10_comparison.png",
+      "bundled_path": "data/training/scene2_corners_2026-10-16_10poses_10_comparison.png",
+      "sha256": "c99cd2d744c2f0fbd0da90c1a17fd81702c3f443d76b19a6a1db79a9d43e7083"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/calibration/validation/scene2_fresh_comparison_2026-10-16_5poses.json",
+      "bundled_path": "data/validation/scene2_fresh_comparison_2026-10-16_5poses.json",
+      "sha256": "2fdb0ecbdb1885a3ec1e4a7e60e7443d5a79a0019591ad4a1703d4de3e160059"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/calibration/validation/scene2_fresh_comparison_2026-10-16_5poses_01_raw.png",
+      "bundled_path": "data/validation/scene2_fresh_comparison_2026-10-16_5poses_01_raw.png",
+      "sha256": "c7166e8b8ff7c182df7d26573c91a4aba7a3ef274353bd4ae2b6151a00d0242d"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/calibration/validation/scene2_fresh_comparison_2026-10-16_5poses_01_original.png",
+      "bundled_path": "data/validation/scene2_fresh_comparison_2026-10-16_5poses_01_original.png",
+      "sha256": "84c24b5bbe2a902560611487c38febcef73f839a085fa571a47b3c589a2f54af"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/calibration/validation/scene2_fresh_comparison_2026-10-16_5poses_01_candidate.png",
+      "bundled_path": "data/validation/scene2_fresh_comparison_2026-10-16_5poses_01_candidate.png",
+      "sha256": "72a2df9cf3c28bc14c2b0de0f0f0e08ba1173f7634200a2a62ec4d2c5860d9d1"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/calibration/validation/scene2_fresh_comparison_2026-10-16_5poses_02_raw.png",
+      "bundled_path": "data/validation/scene2_fresh_comparison_2026-10-16_5poses_02_raw.png",
+      "sha256": "cc0d07513dc4bd3f12cc6362029e390889c03e3bf8501aa40d94eb192c28f10e"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/calibration/validation/scene2_fresh_comparison_2026-10-16_5poses_02_original.png",
+      "bundled_path": "data/validation/scene2_fresh_comparison_2026-10-16_5poses_02_original.png",
+      "sha256": "26e29c6247fcf4dab81e6587d266abe60959d0483609050b19e755a4588ba367"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/calibration/validation/scene2_fresh_comparison_2026-10-16_5poses_02_candidate.png",
+      "bundled_path": "data/validation/scene2_fresh_comparison_2026-10-16_5poses_02_candidate.png",
+      "sha256": "8849f196ec79446e0bb9c73fe6da985b0e4a4fa1f9e005268b399a4796d5c9c6"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/calibration/validation/scene2_fresh_comparison_2026-10-16_5poses_03_raw.png",
+      "bundled_path": "data/validation/scene2_fresh_comparison_2026-10-16_5poses_03_raw.png",
+      "sha256": "64baf69c9533600f74a8ee63bf115d4f7c43ef95721d726c5ba455e268dfdda0"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/calibration/validation/scene2_fresh_comparison_2026-10-16_5poses_03_original.png",
+      "bundled_path": "data/validation/scene2_fresh_comparison_2026-10-16_5poses_03_original.png",
+      "sha256": "07ea2bb8ee143c3fa820321f4506c47b924891d97552fec92b9ccbc07fa74ab2"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/calibration/validation/scene2_fresh_comparison_2026-10-16_5poses_03_candidate.png",
+      "bundled_path": "data/validation/scene2_fresh_comparison_2026-10-16_5poses_03_candidate.png",
+      "sha256": "fef985121fbef22720b8530d73c1002d32fc361017c67a14e54bfaa60486d475"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/calibration/validation/scene2_fresh_comparison_2026-10-16_5poses_04_raw.png",
+      "bundled_path": "data/validation/scene2_fresh_comparison_2026-10-16_5poses_04_raw.png",
+      "sha256": "221adda7cec2e1bec35a5a57837e45fa99a11ec4fc43fc92740d3486af048424"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/calibration/validation/scene2_fresh_comparison_2026-10-16_5poses_04_original.png",
+      "bundled_path": "data/validation/scene2_fresh_comparison_2026-10-16_5poses_04_original.png",
+      "sha256": "c3d6b5e42424f84ff515f8103029cbc5d6614269faebde728cbd2b4fa82560ae"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/calibration/validation/scene2_fresh_comparison_2026-10-16_5poses_04_candidate.png",
+      "bundled_path": "data/validation/scene2_fresh_comparison_2026-10-16_5poses_04_candidate.png",
+      "sha256": "f26f963c5f04b7ef2042161ac96775a02339cd9bde034fb006ad967911273dd7"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/calibration/validation/scene2_fresh_comparison_2026-10-16_5poses_05_raw.png",
+      "bundled_path": "data/validation/scene2_fresh_comparison_2026-10-16_5poses_05_raw.png",
+      "sha256": "a698caf82aaf6a8ad6ef22c7c1aac66f2bfc650df8e5ffe9deccdc99d0f33369"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/calibration/validation/scene2_fresh_comparison_2026-10-16_5poses_05_original.png",
+      "bundled_path": "data/validation/scene2_fresh_comparison_2026-10-16_5poses_05_original.png",
+      "sha256": "a0bce3532ad665950474d68c4235c2690cde5b29a35d638e270dba968a1de427"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/calibration/validation/scene2_fresh_comparison_2026-10-16_5poses_05_candidate.png",
+      "bundled_path": "data/validation/scene2_fresh_comparison_2026-10-16_5poses_05_candidate.png",
+      "sha256": "b6c54a8119b5231c004c19767bf2407e75c5d2b576a068910c811c9ab4878fb2"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/calibration/validation/scene2_original_vs_candidate_training_2026-10-16.json",
+      "bundled_path": "data/frozen_comparison_baseline.json",
+      "sha256": "ceedd2fed27314052e8e728e6985634a9fc53f99bcc6305f535ab4ba2c6997a6"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/calibration/validation/scene2_fresh_comparison_2026-10-16_5poses.report.md",
+      "bundled_path": "evidence/new_pose_validation.report.md",
+      "sha256": "78d863e643c8aee506954c4b654cf19b2499906fb3f10dc6a252af490113c2ad"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/config/hardware.yaml",
+      "bundled_path": "config/hardware.yaml",
+      "sha256": "ecdd39012d6db5fa5105d20a0c4751c2bdcf912c8e8c89e8171d5e4e089f5f3c"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/config/frames.yaml",
+      "bundled_path": "config/frames.yaml",
+      "sha256": "7c529db148034fc6b1efd3245a04c76703ff3c7f7e64c876f490fc0647f67d2d"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/config/tags.yaml",
+      "bundled_path": "config/tags.yaml",
+      "sha256": "48d871e3753a3a964fcfa34dd4f2950b85938c5e5385da7468c90417e518ad27"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/config/handeye.yaml",
+      "bundled_path": "config/handeye.yaml",
+      "sha256": "3e153e9d2f54e9967d872ee59b033bcc984b05ed3e690fd487c077aa417d411d"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/config/python-requirements.txt",
+      "bundled_path": "config/python-requirements.txt",
+      "sha256": "1c6b6a97a37576b27817b559662ed85c350ef0d992fdf64ba0a588a8f13e8ba9"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/scripts/solve_corner_candidate.py",
+      "bundled_path": "source/scripts/solve_corner_candidate.py",
+      "sha256": "ca9f48d13e7f28abae3bfc7323a443254bee70ca8e8b9d0f73ab5cf23b6cbb07"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/scripts/validate_reprojection.py",
+      "bundled_path": "source/scripts/validate_reprojection.py",
+      "sha256": "654e06e4091fdebf702b0d38304c88e4f9339eb8d064eb7e6905beb5f0c507f5"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/scripts/compare_extrinsics.py",
+      "bundled_path": "source/scripts/compare_extrinsics.py",
+      "sha256": "115fbcec2098fb32930922da078459a2c19985cb6fa09ead0b80375d2ec5b321"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/scripts/validate_consistency.py",
+      "bundled_path": "source/scripts/validate_consistency.py",
+      "sha256": "5f80e5609d107ef4943e2680aa6dd887454830b41661c0d76495f844a186594a"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/scripts/print_tag_position.py",
+      "bundled_path": "source/scripts/print_tag_position.py",
+      "sha256": "8b3a04f1ec2a2d8b0f88992dfcfbddcc9dbd007cb4b2ea17f3836be8d8a8b40f"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/scripts/env.sh",
+      "bundled_path": "source/scripts/env.sh",
+      "sha256": "af0cffb0f2e302860359722671f1b826820580c4cef40ae0dec58e3645ac5a97"
+    },
+    {
+      "source": "/home/sichao/zekun/piper-l-handeye-calibration/docs/SOURCES.md",
+      "bundled_path": "source/SOURCES.md",
+      "sha256": "9e74e8b0afdd9deaeb1cb3967295ebe4c9ef0f4a8e5f3406f757c113e6d5f52d"
+    }
+  ]
+}

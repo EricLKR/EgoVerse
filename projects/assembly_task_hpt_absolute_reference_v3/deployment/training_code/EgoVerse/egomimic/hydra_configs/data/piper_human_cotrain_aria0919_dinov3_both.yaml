@@ -1,0 +1,96 @@
+_target_: egomimic.pl_utils.pl_data_utils.MultiDataModuleWrapper
+
+# DINOv3 ViT-L/16 on both Piper cameras.  Human has only the shared front
+# camera, so its inputs are identical to the DINO-front variant.
+train_datasets:
+  piper_left_arm:
+    _target_: egomimic.rldb.zarr.zarr_dataset_multi.MultiDataset._from_resolver
+    resolver:
+      _target_: egomimic.rldb.zarr.zarr_dataset_multi.LocalEpisodeResolver
+      folder_path: ${oc.env:PIPER_HPC}/data/piper_zarr_teddy_0912
+      key_map:
+        _target_: egomimic.rldb.embodiment.dinov3_keymaps.get_piper_dinov3_keymap
+        keymap_mode: cartesian_base
+        variant: both
+      transform_list:
+        _target_: egomimic.rldb.embodiment.piper.Piper.get_transform_list
+        mode: cartesian_camframe
+    filters:
+      _target_: egomimic.rldb.filters.DatasetFilter
+      filter_lambdas:
+        - "lambda row: row['task_name'] in ['teddy_0912_1', 'teddy_0912_2', 'teddy_0912_3', 'teddy_0912_4', 'teddy_0912_5']"
+    mode: total
+    reject_outliers: true
+    error_on_nan_inf: true
+  human_left_arm:
+    _target_: egomimic.rldb.zarr.zarr_dataset_multi.MultiDataset._from_resolver
+    resolver:
+      _target_: egomimic.rldb.zarr.zarr_dataset_multi.LocalEpisodeResolver
+      folder_path: ${oc.env:PIPER_HPC}/data/aria_put_bear_0919_zarr
+      key_map:
+        _target_: egomimic.rldb.embodiment.dinov3_keymaps.get_human_dinov3_keymap
+        keymap_mode: cartesian_camframe_padded
+        has_head_pose: true
+        arm: left
+      transform_list:
+        _target_: egomimic.rldb.embodiment.human_single_arm.get_transform_list
+        mode: cartesian_camframe_padded
+        stride: 1
+        arm: left
+    filters:
+      _target_: egomimic.rldb.filters.DatasetFilter
+      filter_lambdas:
+        - "lambda row: row['task_name'] == 'put_bear_0919_train'"
+    mode: total
+    reject_outliers: true
+    error_on_nan_inf: true
+
+valid_datasets:
+  piper_left_arm:
+    _target_: egomimic.rldb.zarr.zarr_dataset_multi.MultiDataset._from_resolver
+    resolver:
+      _target_: egomimic.rldb.zarr.zarr_dataset_multi.LocalEpisodeResolver
+      folder_path: ${oc.env:PIPER_HPC}/data/piper_zarr_teddy_0912
+      key_map:
+        _target_: egomimic.rldb.embodiment.dinov3_keymaps.get_piper_dinov3_keymap
+        keymap_mode: cartesian_base
+        variant: both
+      transform_list:
+        _target_: egomimic.rldb.embodiment.piper.Piper.get_transform_list
+        mode: cartesian_camframe
+    filters:
+      _target_: egomimic.rldb.filters.DatasetFilter
+      filter_lambdas:
+        - "lambda row: row['task_name'] == 'teddy_0912_6'"
+    mode: total
+    reject_outliers: false
+    error_on_nan_inf: true
+  human_left_arm:
+    _target_: egomimic.rldb.zarr.zarr_dataset_multi.MultiDataset._from_resolver
+    resolver:
+      _target_: egomimic.rldb.zarr.zarr_dataset_multi.LocalEpisodeResolver
+      folder_path: ${oc.env:PIPER_HPC}/data/aria_put_bear_0919_zarr
+      key_map:
+        _target_: egomimic.rldb.embodiment.dinov3_keymaps.get_human_dinov3_keymap
+        keymap_mode: cartesian_camframe_padded
+        has_head_pose: true
+        arm: left
+      transform_list:
+        _target_: egomimic.rldb.embodiment.human_single_arm.get_transform_list
+        mode: cartesian_camframe_padded
+        stride: 1
+        arm: left
+    filters:
+      _target_: egomimic.rldb.filters.DatasetFilter
+      filter_lambdas:
+        - "lambda row: row['task_name'] == 'put_bear_0919_valid'"
+    mode: total
+    reject_outliers: false
+    error_on_nan_inf: true
+
+train_dataloader_params:
+  piper_left_arm: {batch_size: 8, num_workers: 4}
+  human_left_arm: {batch_size: 8, num_workers: 4}
+valid_dataloader_params:
+  piper_left_arm: {batch_size: 8, num_workers: 4}
+  human_left_arm: {batch_size: 8, num_workers: 4}

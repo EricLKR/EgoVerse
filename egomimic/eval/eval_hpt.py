@@ -1,11 +1,80 @@
 import copy
 
+import numpy as np
 import torch
 from torchmetrics import MeanSquaredError
 
 from egomimic.eval.eval_video import EvalVideo
 from egomimic.rldb.embodiment.embodiment import Embodiment, get_embodiment
 from egomimic.utils.metrics import frechet_gaussian_over_time, reverse_kl_from_samples
+from egomimic.utils.pose_utils import _xyzwxyz_to_matrix
+
+
+def _joint_space_metrics(prediction: torch.Tensor, target: torch.Tensor) -> dict:
+    """Joint, binary-gripper, and FK-derived cmd_ee_pose validation metrics."""
+    if prediction.shape[-1] != 7 or target.shape[-1] != 7:
+        raise ValueError(
+            f"Joint-space evaluation expects (..., 7), got {prediction.shape} and {target.shape}"
+        )
+    pred = prediction.detach().cpu().float()
+    gt = target.detach().cpu().float()
+    joint_error = pred[..., :6] - gt[..., :6]
+    metrics = {
+        "joint_mae_deg": torch.rad2deg(joint_error.abs()).mean(),
+        "joint_rmse_deg": torch.rad2deg(joint_error.square().mean().sqrt()),
+    }
+    for index in range(6):
+        metrics[f"joint_{index + 1}_mae_deg"] = torch.rad2deg(
+            joint_error[..., index].abs()
+        ).mean()
+
+    pred_open = pred[..., 6] >= 0.5
+    gt_open = gt[..., 6] >= 0.5
+    tp = (pred_open & gt_open).sum().float()
+    fp = (pred_open & ~gt_open).sum().float()
+    fn = (~pred_open & gt_open).sum().float()
+    precision = tp / (tp + fp).clamp_min(1.0)
+    recall = tp / (tp + fn).clamp_min(1.0)
+    metrics.update(
+        {
+            "gripper_accuracy": (pred_open == gt_open).float().mean(),
+            "gripper_open_precision": precision,
+            "gripper_open_recall": recall,
+            "gripper_open_f1": 2.0 * precision * recall / (precision + recall).clamp_min(1e-8),
+        }
+    )
+
+    # Convert both commanded joint trajectories through exactly the same DH FK
+    # used to create the stored cmd_ee_pose signal.  This exposes whether a
+    # small joint-space error amplifies into a meaningful task-space error.
+    from egomimic.robot.piper.piper_kinematics import PiperKinematicsSolver
+
+    solver = PiperKinematicsSolver(device="cpu")
+    pred_pose = solver.fk(pred[..., :6].reshape(-1, 6).numpy())
+    gt_pose = solver.fk(gt[..., :6].reshape(-1, 6).numpy())
+    position_error = np.linalg.norm(pred_pose[:, :3] - gt_pose[:, :3], axis=-1)
+    pred_rot = _xyzwxyz_to_matrix(pred_pose)[:, :3, :3]
+    gt_rot = _xyzwxyz_to_matrix(gt_pose)[:, :3, :3]
+    relative = np.einsum("nij,njk->nik", np.transpose(pred_rot, (0, 2, 1)), gt_rot)
+    cosine = np.clip((np.trace(relative, axis1=1, axis2=2) - 1.0) * 0.5, -1.0, 1.0)
+    rotation_error_deg = np.rad2deg(np.arccos(cosine))
+    metrics.update(
+        {
+            "cmd_ee_pose_position_mae_m": float(position_error.mean()),
+            "cmd_ee_pose_position_rmse_m": float(np.sqrt(np.mean(position_error**2))),
+            "cmd_ee_pose_rotation_mae_deg": float(rotation_error_deg.mean()),
+            "cmd_ee_pose_rotation_rmse_deg": float(
+                np.sqrt(np.mean(rotation_error_deg**2))
+            ),
+        }
+    )
+    metrics["physical_selection_score"] = (
+        metrics["joint_mae_deg"]
+        + 50.0 * metrics["cmd_ee_pose_position_mae_m"]
+        + 0.25 * metrics["cmd_ee_pose_rotation_mae_deg"]
+        + 10.0 * (1.0 - metrics["gripper_accuracy"])
+    )
+    return metrics
 
 
 class HPTEvalVideo(EvalVideo):
@@ -42,6 +111,18 @@ class HPTEvalVideo(EvalVideo):
                     total_loss = torch.zeros_like(loss_val)
                 total_loss = total_loss + loss_val
                 n_loss_embodiments += 1
+
+            for component_name in (
+                "joint_flow_loss",
+                "joint_position_loss",
+                "gripper_bce",
+                "joint_delta_loss",
+                "joint_acceleration_loss",
+                "joint_total_loss",
+            ):
+                component_key = f"{embodiment_name}_{component_name}"
+                if component_key in preds:
+                    metrics[f"Valid/{component_key}"] = preds[component_key]
 
             if f"{embodiment_name}_{ac_key}" in preds and ac_key != algo.shared_ac_key:
                 metrics[f"Valid/{embodiment_name}_{ac_key}_paired_mse_avg"] = mse(
@@ -82,6 +163,11 @@ class HPTEvalVideo(EvalVideo):
                         )
                         metrics[f"Valid/{pred_key}_frechet_gauss_min"] = fd.min().item()
                         metrics[f"Valid/{pred_key}_frechet_gauss_max"] = fd.max().item()
+                        if aux_key == "actions_joints":
+                            for metric_name, metric_value in _joint_space_metrics(
+                                preds[pred_key], _batch[aux_key]
+                            ).items():
+                                metrics[f"Valid/{pred_key}_{metric_name}"] = metric_value
 
             if (
                 algo.shared_ac_key
@@ -101,6 +187,12 @@ class HPTEvalVideo(EvalVideo):
                 metrics[f"Valid/{pred_key}_frechet_gauss_avg"] = fd.mean().item()
                 metrics[f"Valid/{pred_key}_frechet_gauss_min"] = fd.min().item()
                 metrics[f"Valid/{pred_key}_frechet_gauss_max"] = fd.max().item()
+
+                if algo.shared_ac_key == "actions_joints":
+                    for metric_name, metric_value in _joint_space_metrics(
+                        preds[pred_key], _batch[algo.shared_ac_key]
+                    ).items():
+                        metrics[f"Valid/{pred_key}_{metric_name}"] = metric_value
 
             if algo.rkl_samples and algo.rkl_samples > 1:
                 hpt_batch = {

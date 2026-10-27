@@ -1,0 +1,48 @@
+_target_: egomimic.pl_utils.pl_data_utils.MultiDataModuleWrapper
+
+train_datasets:
+  piper_left_arm:
+    _target_: egomimic.rldb.zarr.zarr_dataset_multi.MultiDataset._from_resolver
+    resolver:
+      _target_: egomimic.rldb.zarr.zarr_dataset_multi.LocalEpisodeResolver
+      folder_path: ${oc.env:PIPER_HPC}/data/piper_zarr_teddy_0912
+      key_map:
+        _target_: egomimic.rldb.embodiment.pi05_expert_action_v3.PiperExpertActionV3.get_keymap
+        keymap_mode: joint_cartesian_camframe
+      transform_list:
+        _target_: egomimic.rldb.embodiment.pi05_expert_action_v3.PiperExpertActionV3.get_transform_list
+        mode: joint_cartesian_camframe
+        stride: 1
+    filters:
+      _target_: egomimic.rldb.filters.DatasetFilter
+      filter_lambdas:
+        - "lambda row: row['task_name'] in ['teddy_0912_1', 'teddy_0912_2', 'teddy_0912_3', 'teddy_0912_4', 'teddy_0912_5']"
+    mode: total
+    reject_outliers: false
+    error_on_nan_inf: true
+
+valid_datasets:
+  piper_left_arm:
+    _target_: egomimic.rldb.zarr.zarr_dataset_multi.MultiDataset._from_resolver
+    resolver:
+      _target_: egomimic.rldb.zarr.zarr_dataset_multi.LocalEpisodeResolver
+      folder_path: ${oc.env:PIPER_HPC}/data/piper_zarr_teddy_0912
+      key_map:
+        _target_: egomimic.rldb.embodiment.pi05_expert_action_v3.PiperExpertActionV3.get_keymap
+        keymap_mode: joint_cartesian_camframe
+      transform_list:
+        _target_: egomimic.rldb.embodiment.pi05_expert_action_v3.PiperExpertActionV3.get_transform_list
+        mode: joint_cartesian_camframe
+        stride: 1
+    filters:
+      _target_: egomimic.rldb.filters.DatasetFilter
+      filter_lambdas:
+        - "lambda row: row['task_name'] == 'teddy_0912_6'"
+    mode: total
+    reject_outliers: false
+    error_on_nan_inf: true
+
+train_dataloader_params:
+  piper_left_arm: {batch_size: 1, num_workers: 4}
+valid_dataloader_params:
+  piper_left_arm: {batch_size: 1, num_workers: 4}

@@ -225,6 +225,33 @@ def train(cfg: DictConfig) -> Tuple[Dict[str, Any], Dict[str, Any]]:
     os.makedirs(os.path.join(trainer.default_root_dir, "videos"), exist_ok=True)
 
     if mode == "train":
+        init_weights_path = cfg.get("init_weights_path")
+        if init_weights_path and cfg.get("ckpt_path"):
+            raise ValueError(
+                "Use only one of init_weights_path (fresh optimizer) or ckpt_path (full resume)"
+            )
+        if init_weights_path:
+            checkpoint = torch.load(
+                init_weights_path, map_location="cpu", weights_only=False
+            )
+            init_weights_strict = bool(cfg.get("init_weights_strict", True))
+            incompatible = model.load_state_dict(
+                checkpoint["state_dict"], strict=init_weights_strict
+            )
+            log.info(
+                f"Initialized model weights from {init_weights_path} "
+                "with a fresh optimizer/scheduler "
+                f"(strict={init_weights_strict})"
+            )
+            if not init_weights_strict:
+                log.info(
+                    "Partial initialization left "
+                    f"{len(incompatible.missing_keys)} missing and "
+                    f"{len(incompatible.unexpected_keys)} unexpected keys; "
+                    "this is expected when replacing only the policy head"
+                )
+                log.debug(f"Missing keys: {incompatible.missing_keys}")
+                log.debug(f"Unexpected keys: {incompatible.unexpected_keys}")
         if cfg.get("evaluator") is not None:
             eval_obj: Eval = hydra.utils.instantiate(cfg.evaluator)
             eval_obj.trainer = trainer

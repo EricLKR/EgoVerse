@@ -1,0 +1,160 @@
+_target_: egomimic.pl_utils.pl_model.ModelWrapper
+robomimic_model:
+  _target_: egomimic.algo.hpt.HPT
+  camera_transforms: {}
+  diffusion: true
+  6dof: false
+
+  ac_keys:
+    piper_left_arm: actions_joints
+  shared_ac_key: actions_joints
+
+  trunk:
+    embed_dim: 256
+    num_blocks: 16
+    num_heads: 8
+    token_postprocessing: action_token
+    observation_horizon: 1
+    action_horizon: 64
+    no_trunk: false
+    use_domain_embedding: true
+    drop_path: 0.1
+    weight_init_style: pytorch
+
+  multitask: false
+  pretrained: false
+  pretrained_checkpoint: null
+  domains: [piper_left_arm]
+  shared_obs_keys: [front_img_1]
+
+  shared_stem_specs:
+    front_img_1:
+      _target_: egomimic.models.hpt_nets.MLPPolicyStem
+      input_dim: 256
+      output_dim: 256
+      widths: [256]
+      specs:
+        random_horizon_masking: false
+        cross_attn:
+          crossattn_latent: 16
+          crossattn_heads: 8
+          crossattn_dim_head: 64
+          crossattn_modality_dropout: 0.1
+          modality_embed_dim: 256
+
+  stem_specs:
+    piper_left_arm:
+      wrist_img:
+        _target_: egomimic.models.hpt_nets.MLPPolicyStem
+        input_dim: 256
+        output_dim: 256
+        widths: [256]
+        specs:
+          random_horizon_masking: false
+          cross_attn:
+            crossattn_latent: 16
+            crossattn_heads: 8
+            crossattn_dim_head: 64
+            crossattn_modality_dropout: 0.1
+            modality_embed_dim: 256
+      state_joints:
+        _target_: egomimic.models.hpt_nets.MLPPolicyStem
+        input_dim: 7  # 6 measured joint radians + continuous gripper aperture
+        output_dim: 256
+        widths: [256]
+        specs:
+          random_horizon_masking: false
+          cross_attn:
+            crossattn_latent: 16
+            crossattn_heads: 8
+            crossattn_dim_head: 64
+            crossattn_modality_dropout: 0.1
+            modality_embed_dim: 256
+
+  head_specs:
+    piper_left_arm: null
+    shared:
+      _target_: egomimic.models.joint_fm_policy.JointFMPolicy
+      action_horizon: 100
+      num_inference_steps: 10
+      pooling: null
+      padding: null
+      time_dist: beta
+      early_horizon: 30
+      early_weight: 2.0
+      joint_dims: 6
+      gripper_index: 6
+      # Gripper classification is already strong; reserve more of the total
+      # objective for the continuous arm trajectory.
+      gripper_loss_weight: 0.6
+      gripper_logit_scale: 4.0
+      gripper_normalized_threshold: 0.0
+      # Training-session command labels are 28.4% closed and 71.6% open.
+      # These reciprocal-frequency weights equalize the two class totals.
+      gripper_closed_weight: 1.76
+      gripper_open_weight: 0.70
+      gripper_transition_weight: 2.0
+      gripper_transition_radius: 3
+      # Directly anchor the denoised joint trajectory, then match its first and
+      # second temporal differences to reduce drift and high-frequency jitter.
+      joint_position_loss_weight: 1.0
+      joint_position_beta: 0.05
+      joint_delta_loss_weight: 0.15
+      joint_delta_beta: 0.05
+      joint_acceleration_loss_weight: 0.05
+      joint_acceleration_beta: 0.02
+      # Mean-normalized internally. J1/J4 receive extra weight because their
+      # independent-test errors dominate the current model.
+      joint_dimension_weights: [1.4, 1.0, 1.0, 1.8, 1.0, 1.2]
+      infer_ac_dims:
+        piper_left_arm: 7
+      model:
+        _target_: egomimic.models.denoising_nets.CrossTransformer
+        nblocks: 6
+        cond_dim: 256
+        hidden_dim: 128
+        act_dim: 7
+        act_seq: 100
+        n_heads: 4
+        dropout: 0.1
+        mlp_layers: 4
+        mlp_ratio: 4
+
+  encoder_specs:
+    front_img_1:
+      _target_: egomimic.models.hpt_nets.ResNet
+      output_dim: 256
+      freeze_backbone: true
+    wrist_img:
+      _target_: egomimic.models.hpt_nets.ResNet
+      output_dim: 256
+      freeze_backbone: true
+
+  train_image_augs:
+    _target_: torchvision.transforms.Compose
+    transforms:
+      - _target_: torchvision.transforms.ColorJitter
+        brightness: 0.1
+        contrast: 0.1
+        saturation: 0.1
+        hue: 0.05
+      - _target_: torchvision.transforms.Normalize
+        mean: [0.485, 0.456, 0.406]
+        std: [0.229, 0.224, 0.225]
+  eval_image_augs:
+    _target_: torchvision.transforms.Compose
+    transforms:
+      - _target_: torchvision.transforms.Normalize
+        mean: [0.485, 0.456, 0.406]
+        std: [0.229, 0.224, 0.225]
+
+optimizer:
+  _target_: torch.optim.AdamW
+  _partial_: true
+  lr: 1e-4
+  weight_decay: 0.0001
+scheduler:
+  _target_: torch.optim.lr_scheduler.CosineAnnealingLR
+  _partial_: true
+  T_max: 30000
+  eta_min: 1e-5

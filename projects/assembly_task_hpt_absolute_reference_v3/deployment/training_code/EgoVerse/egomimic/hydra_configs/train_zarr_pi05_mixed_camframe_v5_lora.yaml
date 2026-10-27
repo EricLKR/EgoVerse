@@ -1,0 +1,11 @@
+defaults:
+  - train_zarr_cartesian
+  - override model: pi0.5_mixed_camframe_v5_lora
+  - override data: piper_human_mixed_camframe_v5
+  - override trainer: ddp_pi
+  - override evaluator: eval_pi05_mixed_camframe_v5
+  - override hydra/launcher: submitit_pace
+  - _self_
+
+name: pi05_mixed_camframe_v5_lora
+description: official_pi05_base_native30_episode_balanced_mixed

@@ -1,0 +1,13 @@
+{
+  "joint_positions_deg": [
+    6.460000000000008,
+    42.49264181523501,
+    -28.75314015375517,
+    -11.510943396226438,
+    40.529281991893455,
+    7.8392814726840925
+  ],
+  "gripper_opening_mm": 101.73667315175099,
+  "source": "assets/reset_control.json.initial_pose original leader pose corresponding to the follower training Home",
+  "task": "Assembly New1"
+}

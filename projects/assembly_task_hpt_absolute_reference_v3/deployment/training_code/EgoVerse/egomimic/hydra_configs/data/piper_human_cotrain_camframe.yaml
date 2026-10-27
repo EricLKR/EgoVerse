@@ -1,0 +1,102 @@
+_target_: egomimic.pl_utils.pl_data_utils.MultiDataModuleWrapper
+
+# Same Piper (30 teddy-bear-basket episodes) + Aria Gen2 human (20 episodes)
+# cotraining as piper_human_cotrain.yaml, but using each embodiment's
+# `cartesian_camframe` mode instead of `cartesian_wristframe` -- this is the
+# EgoVerse paper's actual canonical cross-embodiment representation (a single
+# world->camera/head frame projection for both obs and action, matching
+# Eva's real `_build_eva_bimanual_transform_list`/mode="cartesian" exactly),
+# not the wrist-relative variant used in the earlier cotraining run. See
+# piper.py's class docstring and human_single_arm.py's get_transform_list
+# docstring for the full account of why the wristframe run wasn't actually
+# testing the paper's method.
+train_datasets:
+  piper_left_arm:
+    _target_: egomimic.rldb.zarr.zarr_dataset_multi.MultiDataset._from_resolver
+    resolver:
+      _target_: egomimic.rldb.zarr.zarr_dataset_multi.LocalEpisodeResolver
+      folder_path: /mnt/wd10/tongxi/egoverse_piper/EgoVerse/data/piper_zarr_teddy_bear
+      key_map:
+        _target_: egomimic.rldb.embodiment.piper.Piper.get_keymap
+        keymap_mode: cartesian_base
+      transform_list:
+        _target_: egomimic.rldb.embodiment.piper.Piper.get_transform_list
+        mode: cartesian_camframe
+    filters:
+      _target_: egomimic.rldb.filters.DatasetFilter
+      filter_lambdas:
+        - "lambda row: int(row['episode_hash'].rsplit('ep', 1)[-1]) < 24"
+    mode: total
+  human_left_arm:
+    _target_: egomimic.rldb.zarr.zarr_dataset_multi.MultiDataset._from_resolver
+    resolver:
+      _target_: egomimic.rldb.zarr.zarr_dataset_multi.LocalEpisodeResolver
+      folder_path: /mnt/wd10/tongxi/egoverse_jepa/aria_gen2_data/zarr
+      key_map:
+        _target_: egomimic.rldb.embodiment.human_single_arm.get_keymap
+        keymap_mode: cartesian_camframe_padded
+        has_head_pose: true
+        arm: left
+      transform_list:
+        _target_: egomimic.rldb.embodiment.human_single_arm.get_transform_list
+        mode: cartesian_camframe_padded
+        stride: 1
+        arm: left
+    filters:
+      _target_: egomimic.rldb.filters.DatasetFilter
+      filter_lambdas:
+        - "lambda row: int(row['episode_hash'].rsplit('_', 1)[-1]) % 5 != 0"
+    mode: total
+
+valid_datasets:
+  piper_left_arm:
+    _target_: egomimic.rldb.zarr.zarr_dataset_multi.MultiDataset._from_resolver
+    resolver:
+      _target_: egomimic.rldb.zarr.zarr_dataset_multi.LocalEpisodeResolver
+      folder_path: /mnt/wd10/tongxi/egoverse_piper/EgoVerse/data/piper_zarr_teddy_bear
+      key_map:
+        _target_: egomimic.rldb.embodiment.piper.Piper.get_keymap
+        keymap_mode: cartesian_base
+      transform_list:
+        _target_: egomimic.rldb.embodiment.piper.Piper.get_transform_list
+        mode: cartesian_camframe
+    filters:
+      _target_: egomimic.rldb.filters.DatasetFilter
+      filter_lambdas:
+        - "lambda row: int(row['episode_hash'].rsplit('ep', 1)[-1]) >= 24"
+    mode: total
+  human_left_arm:
+    _target_: egomimic.rldb.zarr.zarr_dataset_multi.MultiDataset._from_resolver
+    resolver:
+      _target_: egomimic.rldb.zarr.zarr_dataset_multi.LocalEpisodeResolver
+      folder_path: /mnt/wd10/tongxi/egoverse_jepa/aria_gen2_data/zarr
+      key_map:
+        _target_: egomimic.rldb.embodiment.human_single_arm.get_keymap
+        keymap_mode: cartesian_camframe_padded
+        has_head_pose: true
+        arm: left
+      transform_list:
+        _target_: egomimic.rldb.embodiment.human_single_arm.get_transform_list
+        mode: cartesian_camframe_padded
+        stride: 1
+        arm: left
+    filters:
+      _target_: egomimic.rldb.filters.DatasetFilter
+      filter_lambdas:
+        - "lambda row: int(row['episode_hash'].rsplit('_', 1)[-1]) % 5 == 0"
+    mode: total
+
+train_dataloader_params:
+  piper_left_arm:
+    batch_size: 8
+    num_workers: 4
+  human_left_arm:
+    batch_size: 8
+    num_workers: 4
+valid_dataloader_params:
+  piper_left_arm:
+    batch_size: 8
+    num_workers: 4
+  human_left_arm:
+    batch_size: 8
+    num_workers: 4

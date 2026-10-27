@@ -1,0 +1,12 @@
+defaults:
+  - train_zarr_cartesian
+  - override model: pi0.5_cotrain_piper_human_joint
+  - override data: piper_human_cotrain_aria0919_pi05
+  - override trainer: ddp_pi
+  - override evaluator: eval_pi_piper_human_joint
+  - override hydra/launcher: submitit_pace
+  - _self_
+
+name: pi05_piper_human_joint
+description: smoke_only
+

@@ -733,6 +733,8 @@ class MultiDataset(torch.utils.data.Dataset):
         percent: float = 0.1,
         valid_ratio: float = 0.2,
         norm_mode: str = "zscore",
+        reject_outliers: bool = True,
+        error_on_nan_inf: bool = True,
         state: dict | None = None,
         **kwargs,
     ):
@@ -755,6 +757,11 @@ class MultiDataset(torch.utils.data.Dataset):
         self.shapes: dict[int, dict[str, tuple]] = {}
         self.norm_stats: dict[int, dict[str, dict[str, np.ndarray]]] = {}
         self._norm_run_metadata: dict[str, float | int | None] | None = None
+        # Normalization and sample rejection are separate policies.  Validation
+        # and test datasets should share training stats without silently
+        # replacing genuine distribution-shift frames.
+        self.reject_outliers = bool(reject_outliers)
+        self.error_on_nan_inf = bool(error_on_nan_inf)
 
         # ---- Dataset graph fields ----
         self.datasets: dict = {}
@@ -884,7 +891,12 @@ class MultiDataset(torch.utils.data.Dataset):
                 if warn_key not in self._warned_violations:
                     self._warned_violations.add(warn_key)
                     logger.warning(prefix)
+                if self.error_on_nan_inf:
+                    raise ValueError(prefix)
                 return prefix
+
+            if not self.reject_outliers:
+                continue
 
             below = arr < q_low
             above = arr > q_high

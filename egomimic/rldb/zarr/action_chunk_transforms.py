@@ -26,6 +26,7 @@ from egomimic.utils.pose_utils import (
     _interpolate_quat_wxyz,
     _interpolate_xyz,
     _matrix_to_xyz,
+    _matrix_to_xyz6d,
     _matrix_to_xyzwxyz,
     _matrix_to_xyzypr,
     _xyz_to_matrix,
@@ -134,6 +135,50 @@ class InterpolateLinear(Transform):
         batch[self.output_action_key] = _interpolate_linear(
             actions, self.new_chunk_length
         )
+        return batch
+
+
+class InterpolateStep(Transform):
+    """Resample discrete ``(T, D)`` actions with zero-order hold.
+
+    Unlike linear interpolation, this never invents fractional values between
+    binary gripper states.  The final source sample is always represented in
+    the output.
+    """
+
+    def __init__(
+        self,
+        new_chunk_length: int,
+        action_key: str,
+        output_action_key: str,
+        stride: int = 1,
+    ):
+        if new_chunk_length <= 0:
+            raise ValueError(f"new_chunk_length must be positive, got {new_chunk_length}")
+        if stride <= 0:
+            raise ValueError(f"stride must be positive, got {stride}")
+        self.new_chunk_length = int(new_chunk_length)
+        self.action_key = action_key
+        self.output_action_key = output_action_key
+        self.stride = int(stride)
+
+    def transform(self, batch: dict) -> dict:
+        actions = np.asarray(batch[self.action_key])
+        if actions.ndim != 2:
+            raise ValueError(
+                f"InterpolateStep expects (T, D), got {actions.shape} for key "
+                f"'{self.action_key}'"
+            )
+        actions = actions[:: self.stride]
+        if actions.shape[0] == 0:
+            raise ValueError(f"InterpolateStep received no samples for key '{self.action_key}'")
+
+        source_positions = np.linspace(
+            0.0, float(actions.shape[0] - 1), self.new_chunk_length
+        )
+        source_indices = np.floor(source_positions).astype(np.int64)
+        source_indices[-1] = actions.shape[0] - 1
+        batch[self.output_action_key] = actions[source_indices]
         return batch
 
 
@@ -382,6 +427,33 @@ class XYZWXYZ_to_XYZYPR(Transform):
             else:
                 raise ValueError(
                     f"XYZWXYZ_to_XYZYPR expects key '{key}' to have shape (7,) "
+                    f"or (T, 7), got {value.shape}"
+                )
+        return batch
+
+
+class XYZWXYZ_to_XYZ6D(Transform):
+    """Convert listed keys from xyz+quat(wxyz) [7D] to xyz + continuous 6D
+    rotation [9D] in-place (see `_matrix_to_xyz6d`). Prefer this over
+    `XYZWXYZ_to_XYZYPR` for any key that feeds a shared action/state head or
+    normalization stats: raw yaw wraps at +-pi, which is fine for viz text but
+    destabilizes per-key min/max bounds checks (zarr_dataset_multi.py's
+    "Bounds violation" rejection sampling fires constantly right at the
+    wrap boundary). 6D has no such discontinuity."""
+
+    def __init__(self, keys: list[str]):
+        self.keys = list(keys)
+
+    def transform(self, batch: dict) -> dict:
+        for key in self.keys:
+            value = np.asarray(batch[key])
+            if value.ndim == 1 and value.shape[0] == 7:
+                batch[key] = _matrix_to_xyz6d(_xyzwxyz_to_matrix(value[None, :]))[0]
+            elif value.ndim == 2 and value.shape[1] == 7:
+                batch[key] = _matrix_to_xyz6d(_xyzwxyz_to_matrix(value))
+            else:
+                raise ValueError(
+                    f"XYZWXYZ_to_XYZ6D expects key '{key}' to have shape (7,) "
                     f"or (T, 7), got {value.shape}"
                 )
         return batch

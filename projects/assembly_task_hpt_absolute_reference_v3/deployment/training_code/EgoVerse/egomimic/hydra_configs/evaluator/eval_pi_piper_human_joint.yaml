@@ -1,0 +1,15 @@
+_target_: egomimic.eval.eval_pi.PIEvalVideo
+viz_func:
+  piper_left_arm:
+    _target_: egomimic.rldb.embodiment.piper_joint.PiperJoint.viz_gt_preds
+    _partial_: true
+    image_key: observations.images.front_img_1
+    action_key: actions_joints
+  human_left_arm:
+    _target_: egomimic.rldb.embodiment.human.Human.viz_gt_preds
+    _partial_: true
+    image_key: observations.images.front_img_1
+    action_key: actions_cartesian_pose
+    mode: traj
+transform_lists: {}
+

@@ -1,0 +1,7 @@
+defaults:
+  - train_zarr_pi05_egoverse_expert_action_v3
+  - override model: pi0.5_egoverse_expert_action_v3_lora
+  - _self_
+
+name: pi05_egoverse_expert_action_v3_lora
+description: mixed_lora_rank16_native30

@@ -1,0 +1,59 @@
+_target_: egomimic.pl_utils.pl_data_utils.MultiDataModuleWrapper
+
+# Local-only: no SQL/S3 registration for this data yet (see egomimic/scripts/piper_process/
+# piper_lerobot_to_zarr.py), so this uses LocalEpisodeResolver over a folder of .zarr
+# episodes rather than Eva/Human's S3EpisodeResolver + SQL filters.
+#
+# NOTE: converted with --allow-approximate-intrinsics (nominal RealSense values, not this
+# rig's real calibration -- viz overlays only). Piper.EXTRINSICS has since been calibrated
+# (calibrate_camera/calibrate_piper_extrinsics.py), so "cartesian_camframe" -- the paper's
+# canonical camera-centered representation, and the mode co-training against egocentric
+# Human data should use (piper_human_cotrain_camframe.yaml) -- is available too. This solo
+# config keeps "cartesian_base". See egomimic/rldb/embodiment/piper.py's class docstring.
+train_datasets:
+  piper_left_arm:
+    _target_: egomimic.rldb.zarr.zarr_dataset_multi.MultiDataset._from_resolver
+    resolver:
+      _target_: egomimic.rldb.zarr.zarr_dataset_multi.LocalEpisodeResolver
+      folder_path: /mnt/wd10/tongxi/egoverse_piper/EgoVerse/data/piper_zarr  # local-only; override on the CLI (data.train_datasets.piper_left_arm.resolver.folder_path=...) if this data moves
+      key_map:
+        _target_: egomimic.rldb.embodiment.piper.Piper.get_keymap
+        keymap_mode: cartesian_base
+      transform_list:
+        _target_: egomimic.rldb.embodiment.piper.Piper.get_transform_list
+        mode: cartesian_base
+    filters:
+      _target_: egomimic.rldb.filters.DatasetFilter
+      # Episodes 0-11 (matches the 80/20 split used for the lerobot ACT baseline in
+      # outputs/train/act_piper_pick_and_place, for a like-for-like comparison).
+      filter_lambdas:
+        - "lambda row: row['episode_hash'] not in ('piper-pick_and_place-ep0012', 'piper-pick_and_place-ep0013', 'piper-pick_and_place-ep0014')"
+    mode: total
+
+valid_datasets:
+  piper_left_arm:
+    _target_: egomimic.rldb.zarr.zarr_dataset_multi.MultiDataset._from_resolver
+    resolver:
+      _target_: egomimic.rldb.zarr.zarr_dataset_multi.LocalEpisodeResolver
+      folder_path: /mnt/wd10/tongxi/egoverse_piper/EgoVerse/data/piper_zarr  # local-only; override on the CLI (data.train_datasets.piper_left_arm.resolver.folder_path=...) if this data moves
+      key_map:
+        _target_: egomimic.rldb.embodiment.piper.Piper.get_keymap
+        keymap_mode: cartesian_base
+      transform_list:
+        _target_: egomimic.rldb.embodiment.piper.Piper.get_transform_list
+        mode: cartesian_base
+    filters:
+      _target_: egomimic.rldb.filters.DatasetFilter
+      # Held-out episodes 12-14, same split as the lerobot ACT baseline's val set.
+      filter_lambdas:
+        - "lambda row: row['episode_hash'] in ('piper-pick_and_place-ep0012', 'piper-pick_and_place-ep0013', 'piper-pick_and_place-ep0014')"
+    mode: total
+
+train_dataloader_params:
+  piper_left_arm:
+    batch_size: 8
+    num_workers: 6
+valid_dataloader_params:
+  piper_left_arm:
+    batch_size: 8
+    num_workers: 6

@@ -137,6 +137,29 @@ class BaseActionConverter:
     def from32(self, actions32: torch.Tensor) -> torch.Tensor:
         raise NotImplementedError
 
+    def valid_mask32(self, actions: torch.Tensor) -> torch.Tensor:
+        """Return the supervised PI action channels for ``actions``.
+
+        Converters pad embodiment-specific actions to OpenPI's fixed 32-D
+        action space.  Padded channels are representation placeholders, not
+        zero-valued targets, and therefore must not contribute to the flow
+        matching loss.
+        """
+        raise NotImplementedError
+
+    def loss_weights32(self, actions: torch.Tensor) -> torch.Tensor:
+        """Return per-channel loss weights in the common 32-D action space."""
+        return self.valid_mask32(actions).to(dtype=actions.dtype)
+
+
+def _channel_mask32(actions: torch.Tensor, active: tuple[int, ...]) -> torch.Tensor:
+    actions = _ensure_bsd(actions)
+    mask = torch.zeros(
+        (*actions.shape[:-1], 32), dtype=torch.bool, device=actions.device
+    )
+    mask[..., list(active)] = True
+    return mask
+
 
 # ============================================================
 #                     ROBOT CONVERTERS
@@ -172,6 +195,9 @@ class RobotLeftCartesianEuler(BaseActionConverter):
         ypr = _matrix_to_ypr(R)
         return torch.cat([xyz, ypr, g], dim=-1)  # (B,S,7)
 
+    def valid_mask32(self, actions: torch.Tensor) -> torch.Tensor:
+        return _channel_mask32(actions, tuple(range(10)))
+
 
 class RobotRightCartesianEuler(BaseActionConverter):
     """
@@ -202,6 +228,9 @@ class RobotRightCartesianEuler(BaseActionConverter):
         R = _reconstruct_R_from_cols(c1, c2)
         ypr = _matrix_to_ypr(R)
         return torch.cat([xyz, ypr, g], dim=-1)  # (B,S,7)
+
+    def valid_mask32(self, actions: torch.Tensor) -> torch.Tensor:
+        return _channel_mask32(actions, tuple(range(10, 20)))
 
 
 class RobotBimanualCartesianEuler(BaseActionConverter):
@@ -249,6 +278,9 @@ class RobotBimanualCartesianEuler(BaseActionConverter):
         R7 = torch.cat([R_xyz, R_ypr, R_g], dim=-1)
         return torch.cat([L7, R7], dim=-1)  # (B,S,14)
 
+    def valid_mask32(self, actions: torch.Tensor) -> torch.Tensor:
+        return _channel_mask32(actions, tuple(range(20)))
+
 
 # ============================================================
 #                     HUMAN CONVERTERS
@@ -280,6 +312,10 @@ class HumanLeftCartesianEuler(BaseActionConverter):
         ypr = _matrix_to_ypr(R)
         return torch.cat([xyz, ypr], dim=-1)  # (B,S,6)
 
+    def valid_mask32(self, actions: torch.Tensor) -> torch.Tensor:
+        # Channel 9 is a synthetic gripper placeholder.
+        return _channel_mask32(actions, tuple(range(9)))
+
 
 class HumanRightCartesianEuler(BaseActionConverter):
     """
@@ -306,6 +342,10 @@ class HumanRightCartesianEuler(BaseActionConverter):
         R = _reconstruct_R_from_cols(c1, c2)
         ypr = _matrix_to_ypr(R)
         return torch.cat([xyz, ypr], dim=-1)  # (B,S,6)
+
+    def valid_mask32(self, actions: torch.Tensor) -> torch.Tensor:
+        # Channel 19 is a synthetic gripper placeholder.
+        return _channel_mask32(actions, tuple(range(10, 19)))
 
 
 class HumanBimanualCartesianEuler(BaseActionConverter):
@@ -345,3 +385,53 @@ class HumanBimanualCartesianEuler(BaseActionConverter):
         R_R = _reconstruct_R_from_cols(R_c1, R_c2)
         R_ypr = _matrix_to_ypr(R_R)
         return torch.cat([L_xyz, L_ypr, R_xyz, R_ypr], dim=-1)  # (B,S,12)
+
+    def valid_mask32(self, actions: torch.Tensor) -> torch.Tensor:
+        # Channels 9 and 19 are synthetic gripper placeholders.
+        return _channel_mask32(actions, tuple(range(9)) + tuple(range(10, 19)))
+
+
+class PiperJointActionConverter(BaseActionConverter):
+    """Pack PIPER's six joint angles plus binary gripper into channels 0..6."""
+
+    def __init__(self, gripper_weight: float = 1.0):
+        if gripper_weight <= 0:
+            raise ValueError("gripper_weight must be positive")
+        self.gripper_weight = float(gripper_weight)
+
+    def to32(self, actions: torch.Tensor) -> torch.Tensor:
+        actions = _ensure_bsd(actions)
+        if actions.shape[-1] != 7:
+            raise ValueError(
+                f"PiperJointActionConverter expected 7-dim actions, got {actions.shape[-1]}"
+            )
+        return _pad32(actions)
+
+    def from32(self, actions32: torch.Tensor) -> torch.Tensor:
+        return _ensure_bsd(actions32)[..., :7]
+
+    def valid_mask32(self, actions: torch.Tensor) -> torch.Tensor:
+        return _channel_mask32(actions, tuple(range(7)))
+
+    def loss_weights32(self, actions: torch.Tensor) -> torch.Tensor:
+        weights = super().loss_weights32(actions)
+        weights[..., 6] = self.gripper_weight
+        return weights
+
+
+class HumanLeftXYZ6DActionConverter(BaseActionConverter):
+    """Pack a human left-hand 9-D ``xyz + rotation-6D`` pose into 0..8."""
+
+    def to32(self, actions: torch.Tensor) -> torch.Tensor:
+        actions = _ensure_bsd(actions)
+        if actions.shape[-1] != 9:
+            raise ValueError(
+                f"HumanLeftXYZ6DActionConverter expected 9-dim actions, got {actions.shape[-1]}"
+            )
+        return _pad32(actions)
+
+    def from32(self, actions32: torch.Tensor) -> torch.Tensor:
+        return _ensure_bsd(actions32)[..., :9]
+
+    def valid_mask32(self, actions: torch.Tensor) -> torch.Tensor:
+        return _channel_mask32(actions, tuple(range(9)))

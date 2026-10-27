@@ -1,0 +1,59 @@
+{
+  "schema": "assembly_new1_wrist_visual_zero_offset_candidate_v1",
+  "created_utc": "2026-10-20T22:30:24.766014+00:00",
+  "status": "candidate_not_activated",
+  "source_run": "validation/wrist_zero_calibration/execute_20261020T222804Z/candidate_joint_zero_offset.json",
+  "model_training_home_joints_deg": [
+    6.46,
+    42.912,
+    -27.554,
+    -11.212,
+    41.809,
+    7.905
+  ],
+  "hardware_visual_home_command_joints_deg": [
+    6.46,
+    42.912,
+    -27.554,
+    -3.541802213435444,
+    41.124927007706766,
+    2.76742820076812
+  ],
+  "hardware_visual_home_measured_joints_deg": [
+    6.51,
+    42.864,
+    -27.486,
+    -3.547,
+    41.086,
+    2.781
+  ],
+  "hardware_minus_model_joint_offset_deg": [
+    0.0,
+    0.0,
+    0.0,
+    7.670197786564556,
+    -0.6840729922932312,
+    -5.13757179923188
+  ],
+  "active_joints_1_based": [4, 5, 6],
+  "baseline_alignment": {
+    "translation_norm_px": 57.55197649265439,
+    "rotation_deg": -0.5992494130537729,
+    "scale": 1.0193730449801928,
+    "good_match_count": 306,
+    "inlier_count": 148
+  },
+  "final_alignment": {
+    "tx_px": -1.8259861836647802,
+    "ty_px": 0.9006465164448442,
+    "translation_norm_px": 2.036023008347131,
+    "rotation_deg": 0.2533402278149113,
+    "scale": 0.9980923521543787,
+    "good_match_count": 473,
+    "inlier_count": 272
+  },
+  "translation_tolerance_px": 3.0,
+  "rotation_tolerance_deg": 0.75,
+  "deployment_files_modified": false,
+  "note": "Home-only visual solution. It is not deployable until the separate multi-pose validator passes at least three poses and an operator explicitly approves it."
+}

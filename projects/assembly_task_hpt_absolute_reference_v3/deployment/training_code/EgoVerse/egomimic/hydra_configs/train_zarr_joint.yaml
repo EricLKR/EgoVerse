@@ -1,0 +1,35 @@
+defaults:
+  - model: hpt_bc_piper_solo_joint
+  - paths: default
+  - trainer: ddp
+  - debug: null
+  - logger: wandb
+  - data: piper_solo_teddy_0912_joint
+  - callbacks: checkpoints
+  - evaluator: eval_hpt_joint
+  - override hydra/launcher: submitit
+  - _self_
+
+name: piper_joint
+description: piper_joint_space_binary_gripper
+ckpt_path: null
+init_weights_path: null
+mode: train
+
+hydra:
+  run:
+    dir: ./logs/${name}/${description}_${now:%Y-%m-%d_%H-%M-%S}
+  sweep:
+    dir: ./logs/${name}/${description}_${now:%Y-%m-%d_%H-%M-%S}
+
+launch_params:
+  gpus_per_node: 1
+  nodes: 1
+seed: 42
+norm_stats:
+  norm_mode: quantile
+  sample_frac: 1.0
+  num_workers: 4
+  save_cache_dir: ${hydra:runtime.output_dir}
+  precomputed_norm_path: null
+reject_outliers: true
